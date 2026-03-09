@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Hotel Dashboard</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#f4f6f9;
+margin:0;
+}
+
+/* NAVBAR */
+
+.navbar{
+background:#2c3e50;
+color:white;
+padding:15px 30px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+.navbar h2{
+margin:0;
+font-size:20px;
+}
+
+.navbar a{
+color:white;
+text-decoration:none;
+background:#e74c3c;
+padding:8px 15px;
+border-radius:5px;
+font-size:14px;
+}
+
+/* PAGE */
+
+.container{
+padding:40px;
+}
+
+h1{
+text-align:center;
+margin-bottom:40px;
+}
+
+/* WEBSITE CARD */
+
+.website-box{
+background:white;
+padding:25px;
+margin-bottom:35px;
+border-radius:12px;
+box-shadow:0 4px 10px rgba(0,0,0,0.08);
+}
+
+.website-title{
+font-size:22px;
+font-weight:bold;
+margin-bottom:20px;
+color:#2c3e50;
+border-bottom:2px solid #eee;
+padding-bottom:10px;
+}
+
+/* ROOM TYPES */
+
+.room-types{
+display:flex;
+gap:15px;
+margin-bottom:25px;
+}
+
+.room-type-card{
+padding:10px 18px;
+border-radius:8px;
+color:white;
+cursor:pointer;
+font-weight:bold;
+font-size:14px;
+}
+
+.normal{background:#3498db;}
+.deluxe{background:#2ecc71;}
+.star5{background:gold;color:black;}
+
+/* ROOMS */
+
+.room-grid{
+display:none;
+margin-top:15px;
+}
+
+.rooms{
+display:flex;
+flex-wrap:wrap;
+gap:10px;
+margin-top:15px;
+}
+
+.room-card{
+width:60px;
+height:60px;
+display:flex;
+align-items:center;
+justify-content:center;
+border-radius:6px;
+color:white;
+font-weight:bold;
+cursor:pointer;
+transition:0.2s;
+}
+
+.room-card:hover{
+transform:scale(1.05);
+}
+
+.available{
+background:#27ae60;
+cursor:default;
+}
+
+.occupied{
+background:#e74c3c;
+}
+
+/* BOOKING */
+
+.booking-card{
+display:none;
+background:#f9f9f9;
+padding:15px;
+border-radius:8px;
+margin-top:20px;
+box-shadow:0 2px 6px rgba(0,0,0,0.1);
+}
+
+</style>
+
+<script>
+
+function showRoomType(id,siteId){
+
+let site=document.getElementById(siteId)
+let grids=site.querySelectorAll(".room-grid")
+
+grids.forEach(g=>{
+g.style.display="none"
+})
+
+document.getElementById(id).style.display="block"
+
+}
+
+function toggleBooking(id){
+
+let card=document.getElementById(id)
+
+if(!card) return
+
+if(card.style.display==="block"){
+card.style.display="none"
+return
+}
+
+document.querySelectorAll(".booking-card").forEach(c=>{
+c.style.display="none"
+})
+
+card.style.display="block"
+
+}
+
+</script>
+
+</head>
+
+<body>
+
+<div class="navbar">
+<h2>{{ hotel_name }} Admin Panel</h2>
+<a href="{% url 'hotel_login' %}">Logout</a>
+</div>
+
+<div class="container">
+
+<h1>Hotel Dashboard</h1>
+
+{% for site in websites_found %}
+
+<div class="website-box" id="site{{ forloop.counter }}">
+
+<div class="website-title">{{ site.website }}</div>
+
+<div class="room-types">
+
+{% for room in site.hotel_data.rooms %}
+
+<div
+class="room-type-card {% if room.room_type == 'Normal' %}normal{% elif room.room_type == 'Delux' %}deluxe{% else %}star5{% endif %}"
+onclick="showRoomType('roomtype{{ forloop.parentloop.counter }}{{ forloop.counter }}','site{{ forloop.parentloop.counter }}')">
+
+{{ room.room_type }}
+
+</div>
+
+{% endfor %}
+
+</div>
+
+{% for room in site.hotel_data.rooms %}
+
+<div id="roomtype{{ forloop.parentloop.counter }}{{ forloop.counter }}" class="room-grid">
+
+<p>
+<b>Price:</b> ₹{{ room.price }} |
+<b>Total Rooms:</b> {{ room.total_rooms }} |
+<b>Available:</b> {{ room.available_rooms }}
+</p>
+
+<div class="rooms">
+
+{% for i in ""|center:room.total_rooms %}
+
+{% if forloop.counter <= room.booked_rooms %}
+
+<div
+class="room-card occupied"
+onclick="toggleBooking('booking{{ forloop.parentloop.parentloop.counter }}{{ forloop.parentloop.counter }}{{ forloop.counter }}')">
+
+{{ forloop.counter }}
+
+</div>
+
+{% else %}
+
+<div class="room-card available">
+{{ forloop.counter }}
+</div>
+
+{% endif %}
+
+{% endfor %}
+
+</div>
+
+<!-- BOOKINGS -->
+
+{% for booking in room.room_bookings %}
+
+{% for i in ""|center:booking.count %}
+
+<div id="booking{{ forloop.parentloop.parentloop.parentloop.counter }}{{ forloop.parentloop.parentloop.counter }}{{ forloop.counter }}" class="booking-card">
+
+<h4>Booking Details</h4>
+
+<p><b>Guest:</b> {{ booking.name }}</p>
+<p><b>Email:</b> {{ booking.email }}</p>
+<p><b>Room Type:</b> {{ booking.room_type }}</p>
+<p><b>Check In:</b> {{ booking.check_in }}</p>
+<p><b>Check Out:</b> {{ booking.check_out }}</p>
+<p><b>Total:</b> ₹{{ booking.total_amount }}</p>
+
+</div>
+
+{% endfor %}
+
+{% endfor %}
+
+</div>
+
+{% endfor %}
+
+</div>
+
+{% endfor %}
+
+</div>
+
+</body>
+</html>

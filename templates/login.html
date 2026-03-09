@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Hotel Login</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#f4f6f9;
+margin:0;
+}
+
+/* NAVBAR */
+
+.navbar{
+background:#2c3e50;
+color:white;
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:15px 30px;
+}
+
+.navbar h2{
+margin:0;
+font-size:20px;
+}
+
+.nav-links a{
+color:white;
+text-decoration:none;
+margin-left:20px;
+font-size:14px;
+padding:6px 12px;
+border-radius:5px;
+}
+
+.nav-links a:hover{
+background:#34495e;
+}
+
+/* LOGIN CONTAINER */
+
+.container{
+display:flex;
+justify-content:center;
+align-items:center;
+height:80vh;
+}
+
+/* LOGIN BOX */
+
+.login-box{
+background:white;
+padding:40px;
+border-radius:10px;
+box-shadow:0 4px 10px rgba(0,0,0,0.1);
+width:320px;
+text-align:center;
+}
+
+.login-box h2{
+margin-bottom:25px;
+color:#2c3e50;
+}
+
+input{
+width:100%;
+padding:10px;
+margin-bottom:15px;
+border:1px solid #ccc;
+border-radius:6px;
+font-size:14px;
+}
+
+button{
+width:100%;
+padding:10px;
+background:#3498db;
+border:none;
+color:white;
+font-size:15px;
+border-radius:6px;
+cursor:pointer;
+}
+
+button:hover{
+background:#2980b9;
+}
+
+</style>
+
+<script>
+
+/* Validate hotel name */
+
+function validateLogin(){
+
+let hotel=document.getElementById("hotel_name").value.trim()
+
+if(hotel === ""){
+alert("Please enter hotel name")
+return false
+}
+
+if(hotel.length < 3){
+alert("Hotel name must be at least 3 characters")
+return false
+}
+
+return true
+}
+
+/* Auto capitalize words */
+
+function capitalizeName(){
+
+let input=document.getElementById("hotel_name")
+
+let words=input.value.split(" ")
+
+for(let i=0;i<words.length;i++){
+
+if(words[i].length>0){
+words[i]=words[i][0].toUpperCase()+words[i].slice(1).toLowerCase()
+}
+
+}
+
+input.value=words.join(" ")
+
+}
+
+
+
+document.addEventListener("DOMContentLoaded",function(){
+
+let input=document.getElementById("hotel_name")
+
+input.addEventListener("keypress",function(e){
+
+if(e.key==="Enter"){
+document.getElementById("loginForm").submit()
+}
+
+})
+
+})
+
+</script>
+
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+
+<div class="navbar">
+
+<h2>Hotel Management System</h2>
+
+<div class="nav-links">
+<a href="#">Home</a>
+<a href="#">About</a>
+<a href="#">Contact</a>
+</div>
+
+</div>
+
+<!-- LOGIN FORM -->
+
+<div class="container">
+
+<div class="login-box">
+
+<h2>Hotel Login</h2>
+
+<form method="POST" id="loginForm" onsubmit="return validateLogin()">
+
+{% csrf_token %}
+
+<input 
+type="text" 
+name="hotel_name" 
+id="hotel_name"
+placeholder="Enter Hotel Name"
+onblur="capitalizeName()"
+required>
+
+<button type="submit">Login</button>
+
+</form>
+
+</div>
+
+</div>
+
+</body>
+</html>
