@@ -93,6 +93,7 @@ def login_view(request):
 
 
 def hotel_results_page(request):
+
     hotel_name = request.session.get('hotel_name')
     if not hotel_name:
         return redirect('hotel_login')
@@ -108,9 +109,11 @@ def hotel_results_page(request):
     result = []
 
     for site in websites:
+
         headers = {"API-KEY": site["api_key"]}
 
         try:
+
             response = requests.get(site["url"], headers=headers, timeout=5)
 
             if response.status_code != 200:
@@ -126,18 +129,32 @@ def hotel_results_page(request):
                     rooms = hotel.get("rooms", [])
                     bookings = hotel.get("bookings", [])
 
-                    
                     for room in rooms:
 
                         room_booking_list = []
-                        booked_count=0
+                        booked_count = 0
 
                         for booking in bookings:
+
                             if booking["room_type"] == room["room_type"]:
-                                room_booking_list.append(booking)
-                                booked_count+=booking.get("count",0)
+
+                                count = booking.get("count", 1)
+
+                                for i in range(count):
+
+                                    room_booking_list.append({
+                                        "name": booking.get("name"),
+                                        "email": booking.get("email"),
+                                        "room_type": booking.get("room_type"),
+                                        "check_in": booking.get("check_in"),
+                                        "check_out": booking.get("check_out"),
+                                        "total_amount": booking.get("total_amount")
+                                    })
+
+                                    booked_count += 1
 
                         room["booked_rooms"] = booked_count
+                        room["available_rooms"] = room["total_rooms"] - booked_count
                         room["room_bookings"] = room_booking_list
 
                     result.append({

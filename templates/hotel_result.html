@@ -1,259 +1,114 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Hotel Dashboard</title>
+    <title>Hotel Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; }
+        .navbar { background: #2c3e50; color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .container { padding: 40px; }
+        h1 { text-align: center; color: #2c3e50; }
 
-<style>
+        /* WEBSITE BOX */
+        .website-box { background: white; padding: 25px; margin-bottom: 35px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
+        .website-title { font-size: 22px; font-weight: bold; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
 
-body{
-font-family:Arial;
-background:#f4f6f9;
-margin:0;
-}
+        /* ROOM TYPES */
+        .room-types { display: flex; gap: 15px; margin-bottom: 25px; }
+        .room-type-card { padding: 10px 18px; border-radius: 8px; color: white; cursor: pointer; font-weight: bold; }
+        .normal { background: #3498db; }
+        .deluxe { background: #2ecc71; }
+        .star5 { background: gold; color: black; }
 
-/* NAVBAR */
+        /* ROOM GRID */
+        .room-grid { display: none; margin-top: 15px; }
+        .rooms-flex { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
+        .room-card { width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 6px; color: white; font-weight: bold; cursor: pointer; }
+        
+        .occupied { background: #e74c3c; border: 2px solid #c0392b; }
+        .available { background: #27ae60; cursor: default; }
 
-.navbar{
-background:#2c3e50;
-color:white;
-padding:15px 30px;
-display:flex;
-justify-content:space-between;
-align-items:center;
-}
+        /* BOOKING DETAILS SECTION */
+        .booking-section { margin-top: 25px; }
+        .booking-card { 
+            display: none; 
+            background: #fff; 
+            padding: 20px; 
+            border-radius: 8px; 
+            border-left: 10px solid #e74c3c; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2); 
+            margin-bottom: 10px;
+        }
+        .booking-card h4 { margin-top: 0; color: #e74c3c; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+    </style>
 
-.navbar h2{
-margin:0;
-font-size:20px;
-}
+    <script>
+        function showRoomType(id, siteId) {
+            let site = document.getElementById(siteId);
+            let grids = site.querySelectorAll(".room-grid");
+            grids.forEach(g => { g.style.display = "none"; });
+            document.getElementById(id).style.display = "block";
+        }
 
-.navbar a{
-color:white;
-text-decoration:none;
-background:#e74c3c;
-padding:8px 15px;
-border-radius:5px;
-font-size:14px;
-}
-
-/* PAGE */
-
-.container{
-padding:40px;
-}
-
-h1{
-text-align:center;
-margin-bottom:40px;
-}
-
-/* WEBSITE CARD */
-
-.website-box{
-background:white;
-padding:25px;
-margin-bottom:35px;
-border-radius:12px;
-box-shadow:0 4px 10px rgba(0,0,0,0.08);
-}
-
-.website-title{
-font-size:22px;
-font-weight:bold;
-margin-bottom:20px;
-color:#2c3e50;
-border-bottom:2px solid #eee;
-padding-bottom:10px;
-}
-
-/* ROOM TYPES */
-
-.room-types{
-display:flex;
-gap:15px;
-margin-bottom:25px;
-}
-
-.room-type-card{
-padding:10px 18px;
-border-radius:8px;
-color:white;
-cursor:pointer;
-font-weight:bold;
-font-size:14px;
-}
-
-.normal{background:#3498db;}
-.deluxe{background:#2ecc71;}
-.star5{background:gold;color:black;}
-
-/* ROOMS */
-
-.room-grid{
-display:none;
-margin-top:15px;
-}
-
-.rooms{
-display:flex;
-flex-wrap:wrap;
-gap:10px;
-margin-top:15px;
-}
-
-.room-card{
-width:60px;
-height:60px;
-display:flex;
-align-items:center;
-justify-content:center;
-border-radius:6px;
-color:white;
-font-weight:bold;
-cursor:pointer;
-transition:0.2s;
-}
-
-.room-card:hover{
-transform:scale(1.05);
-}
-
-.available{
-background:#27ae60;
-cursor:default;
-}
-
-.occupied{
-background:#e74c3c;
-}
-
-/* BOOKING */
-
-.booking-card{
-display:none;
-background:#f9f9f9;
-padding:15px;
-border-radius:8px;
-margin-top:20px;
-box-shadow:0 2px 6px rgba(0,0,0,0.1);
-}
-
-</style>
-
-<script>
-
-function showRoomType(id,siteId){
-
-let site=document.getElementById(siteId)
-let grids=site.querySelectorAll(".room-grid")
-
-grids.forEach(g=>{
-g.style.display="none"
-})
-
-document.getElementById(id).style.display="block"
-
-}
-
-function toggleBooking(id){
-
-let card=document.getElementById(id)
-
-if(!card) return
-
-if(card.style.display==="block"){
-card.style.display="none"
-return
-}
-
-document.querySelectorAll(".booking-card").forEach(c=>{
-c.style.display="none"
-})
-
-card.style.display="block"
-
-}
-
-</script>
-
+        function toggleBooking(bookingId) {
+            // Hide all booking cards first to show only the selected one
+            document.querySelectorAll(".booking-card").forEach(card => {
+                card.style.display = "none";
+            });
+            
+            let target = document.getElementById(bookingId);
+            if (target) {
+                target.style.display = "block";
+                target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            } else {
+                alert("No details found for this specific room.");
+            }
+        }
+    </script>
 </head>
-
 <body>
 
 <div class="navbar">
-<h2>{{ hotel_name }} Admin Panel</h2>
-<a href="{% url 'hotel_login' %}">Logout</a>
+    <h2>{{ hotel_name }} Admin Panel</h2>
+    <a href="{% url 'hotel_login' %}" style="color:white; background:#e74c3c; padding:8px 12px; border-radius:5px; text-decoration:none;">Logout</a>
 </div>
 
 <div class="container">
+    <h1>Hotel Dashboard</h1>
 
-<h1>Hotel Dashboard</h1>
+    {% for site in websites_found %}
+    <div class="website-box" id="site_{{ forloop.counter }}">
+        <div class="website-title">{{ site.website }}</div>
 
-{% for site in websites_found %}
+        <div class="room-types">
+            {% for room in site.hotel_data.rooms %}
+            <div class="room-type-card {% if room.room_type == 'Normal' %}normal{% elif room.room_type == 'Delux' %}deluxe{% else %}star5{% endif %}"
+                 onclick="showRoomType('grid_{{ forloop.parentloop.counter }}_{{ forloop.counter }}', 'site_{{ forloop.parentloop.counter }}')">
+                {{ room.room_type }}
+            </div>
+            {% endfor %}
+        </div>
 
-<div class="website-box" id="site{{ forloop.counter }}">
+        {% for room in site.hotel_data.rooms %}
+        <div id="grid_{{ forloop.parentloop.counter }}_{{ forloop.counter }}" class="room-grid">
+            <p><b>Room Type:</b> {{ room.room_type }} | <b>Price:</b> ₹{{ room.price }}</p>
+            
+            <div class="rooms-flex">
+                {% for i in ""|center:room.total_rooms %}
+                    {% if forloop.counter <= room.booked_rooms %}
+                        <div class="room-card occupied" 
+                             onclick="toggleBooking('details_{{ forloop.parentloop.parentloop.counter }}_{{ forloop.parentloop.counter }}_{{ forloop.counter }}')">
+                            {{ forloop.counter }}
+                        </div>
+                    {% else %}
+                        <div class="room-card available">{{ forloop.counter }}</div>
+                    {% endif %}
+                {% endfor %}
+            </div>
 
-<div class="website-title">{{ site.website }}</div>
+            <div class="booking-section">
+              {% for booking in room.room_bookings %}
 
-<div class="room-types">
-
-{% for room in site.hotel_data.rooms %}
-
-<div
-class="room-type-card {% if room.room_type == 'Normal' %}normal{% elif room.room_type == 'Delux' %}deluxe{% else %}star5{% endif %}"
-onclick="showRoomType('roomtype{{ forloop.parentloop.counter }}{{ forloop.counter }}','site{{ forloop.parentloop.counter }}')">
-
-{{ room.room_type }}
-
-</div>
-
-{% endfor %}
-
-</div>
-
-{% for room in site.hotel_data.rooms %}
-
-<div id="roomtype{{ forloop.parentloop.counter }}{{ forloop.counter }}" class="room-grid">
-
-<p>
-<b>Price:</b> ₹{{ room.price }} |
-<b>Total Rooms:</b> {{ room.total_rooms }} |
-<b>Available:</b> {{ room.available_rooms }}
-</p>
-
-<div class="rooms">
-
-{% for i in ""|center:room.total_rooms %}
-
-{% if forloop.counter <= room.booked_rooms %}
-
-<div
-class="room-card occupied"
-onclick="toggleBooking('booking{{ forloop.parentloop.parentloop.counter }}{{ forloop.parentloop.counter }}{{ forloop.counter }}')">
-
-{{ forloop.counter }}
-
-</div>
-
-{% else %}
-
-<div class="room-card available">
-{{ forloop.counter }}
-</div>
-
-{% endif %}
-
-{% endfor %}
-
-</div>
-
-<!-- BOOKINGS -->
-
-{% for booking in room.room_bookings %}
-
-{% for i in ""|center:booking.count %}
-
-<div id="booking{{ forloop.parentloop.parentloop.parentloop.counter }}{{ forloop.parentloop.parentloop.counter }}{{ forloop.counter }}" class="booking-card">
+<div id="details_{{ forloop.parentloop.parentloop.counter }}_{{ forloop.parentloop.counter }}_{{ forloop.counter }}" class="booking-card">
 
 <h4>Booking Details</h4>
 
@@ -267,17 +122,11 @@ onclick="toggleBooking('booking{{ forloop.parentloop.parentloop.counter }}{{ for
 </div>
 
 {% endfor %}
-
-{% endfor %}
-
-</div>
-
-{% endfor %}
-
-</div>
-
-{% endfor %}
-
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
 </div>
 
 </body>
