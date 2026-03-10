@@ -2,7 +2,9 @@ import requests
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.shortcuts import redirect,render
-
+from django.contrib import messages
+from .serializers import RegisterSerializers
+from .models import Register
 
 # -------------------- Hotel Fetch API View --------------------
 
@@ -49,7 +51,7 @@ class HotelLoginFetch(APIView):
             }
 
             try:
-                response = requests.get(site["url"], headers=headers)
+                response = requests.get(site["url"], headers=headers,timeout=5)
                 
                 if response.status_code != 200:
                     continue
@@ -76,24 +78,75 @@ class HotelLoginFetch(APIView):
             "hotel": hotel_name,
             "websites_found": result
         })
-    
+# -------------------- INDEX --------------------
+
+def index(request):
+    return render(request,'index.html')
+
+
+# -------------------- HOTEL REGISTER --------------------
+
+
+
+def hotel_register(request):
+
+    if request.method == "POST":
+
+        hotel_name = request.POST.get("hotel_name")
+        owner_name = request.POST.get("owner_name")
+        email = request.POST.get("email")
+        address = request.POST.get("address")
+        city = request.POST.get("city")
+        password = request.POST.get("password")
+
+        Register.objects.create(
+            hotel_name=hotel_name,
+            owner_name=owner_name,
+            email=email,
+            address=address,
+            city=city,
+            password=password
+        )
+
+        return redirect("index")
+
+    return render(request, "hotel_result.html")
+
+
 # -------------------- HOTEL AUTHENTICATION AND HOTEL DETAILS --------------------
 
 
 
 def login_view(request):
+
     if request.method == "POST":
-        hotel_name = request.POST.get('hotel_name')
-        if hotel_name:
-            
-            request.session['hotel_name'] = hotel_name
-           
-            return redirect('hotel_result')  
-    return render(request, 'login.html')
+
+        hotel_name = request.POST.get("hotel_name")
+        password = request.POST.get("password")
+
+        try:
+            hotel = Register.objects.get(
+                hotel_name=hotel_name,
+                password=password
+            )
+
+            request.session["hotel_name"] = hotel.hotel_name
+
+            return redirect("hotel_result")
+
+        except Register.DoesNotExist:
+
+            messages.error(request, "Invalid hotel name or password")
+            return redirect("index")
+
+    return redirect("index")
+
+
+
+
 
 
 def hotel_results_page(request):
-
     hotel_name = request.session.get('hotel_name')
     if not hotel_name:
         return redirect('hotel_login')
@@ -106,16 +159,14 @@ def hotel_results_page(request):
         {"name": "Veedu", "url": "https://veedu.onrender.com/bookingapp/api/", "api_key": "c1a7f9d4b6e3a8c2d5f0b1e7c9a4d2f6"},
     ]
 
-    result = []
+    hotel_rooms = None
+    combined_bookings = []
 
+    # Fetch bookings from all websites
     for site in websites:
-
         headers = {"API-KEY": site["api_key"]}
-
         try:
-
             response = requests.get(site["url"], headers=headers, timeout=5)
-
             if response.status_code != 200:
                 continue
 
@@ -123,55 +174,63 @@ def hotel_results_page(request):
             hotels = data if isinstance(data, list) else data.get("results", [])
 
             for hotel in hotels:
-
                 if hotel.get("name", "").lower() == hotel_name.lower():
+                    if hotel_rooms is None:
+                        hotel_rooms = hotel.get("rooms", [])
 
-                    rooms = hotel.get("rooms", [])
                     bookings = hotel.get("bookings", [])
-
-                    for room in rooms:
-
-                        room_booking_list = []
-                        booked_count = 0
-
-                        for booking in bookings:
-
-                            if booking["room_type"] == room["room_type"]:
-
-                                count = booking.get("count", 1)
-
-                                for i in range(count):
-
-                                    room_booking_list.append({
-                                        "name": booking.get("name"),
-                                        "email": booking.get("email"),
-                                        "room_type": booking.get("room_type"),
-                                        "check_in": booking.get("check_in"),
-                                        "check_out": booking.get("check_out"),
-                                        "total_amount": booking.get("total_amount")
-                                    })
-
-                                    booked_count += 1
-
-                        room["booked_rooms"] = booked_count
-                        room["available_rooms"] = room["total_rooms"] - booked_count
-                        room["room_bookings"] = room_booking_list
-
-                    result.append({
-                        "website": site["name"],
-                        "hotel_data": hotel,
-                        "url": site["url"],
-                        "api_key": site["api_key"]
-                    })
-
+                    for booking in bookings:
+                        booking["website"] = site["name"]
+                        count = booking.get("count", 1)
+                        for _ in range(count):
+                            combined_bookings.append({
+                                "name": booking.get("name"),
+                                "email": booking.get("email"),
+                                "room_type": booking.get("room_type"),
+                                "check_in": booking.get("check_in"),
+                                "check_out": booking.get("check_out"),
+                                "total_amount": booking.get("total_amount"),
+                                "website": site["name"]
+                            })
         except requests.exceptions.RequestException:
             continue
+
+    if not hotel_rooms:
+        hotel_rooms = []
+
+    
+    for room in hotel_rooms:
+        total_rooms = room.get("total_rooms", 0)
+        room_booking_list = []
+        website_stats = {}
+        booked_numbers = set()
+
+        for booking in combined_bookings:
+            if booking["room_type"] == room["room_type"]:
+                
+                for num in range(1, total_rooms + 1):
+                    if num not in booked_numbers:
+                        booking["room_number"] = num
+                        booked_numbers.add(num)
+                        break
+
+                room_booking_list.append(booking)
+
+                site_name = booking["website"]
+                if site_name not in website_stats:
+                    website_stats[site_name] = []
+                website_stats[site_name].append(booking["room_number"])
+
+        room["booked_rooms"] = len(room_booking_list)
+        room["available_rooms"] = total_rooms - len(room_booking_list)
+        room["room_bookings"] = room_booking_list
+        room["website_stats"] = website_stats
 
     return render(
         request,
         "hotel_result.html",
         {
             "hotel_name": hotel_name,
-            "websites_found": result
+            "rooms": hotel_rooms
         }
     )

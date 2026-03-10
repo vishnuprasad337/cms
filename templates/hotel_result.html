@@ -1,133 +1,378 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Hotel Dashboard</title>
-    <style>
-        body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; }
-        .navbar { background: #2c3e50; color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
-        .container { padding: 40px; }
-        h1 { text-align: center; color: #2c3e50; }
+<title>Dynamic Hotel Dashboard | Live Management</title>
+<style>
+:root {
+    --primary-dark: #1a2634;
+    --primary-medium: #2c3e50;
+    --accent-blue: #3498db;
+    --accent-green: #2ecc71;
+    --accent-gold: #f1c40f;
+    --accent-red: #e74c3c;
+    --success-green: #27ae60;
+    --light-bg: #f8fafc;
+    --card-shadow: 0 10px 30px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.05);
+    --hover-shadow: 0 20px 40px rgba(0,0,0,0.12), 0 8px 20px rgba(0,0,0,0.08);
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
 
-        /* WEBSITE BOX */
-        .website-box { background: white; padding: 25px; margin-bottom: 35px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
-        .website-title { font-size: 22px; font-weight: bold; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
-        /* ROOM TYPES */
-        .room-types { display: flex; gap: 15px; margin-bottom: 25px; }
-        .room-type-card { padding: 10px 18px; border-radius: 8px; color: white; cursor: pointer; font-weight: bold; }
-        .normal { background: #3498db; }
-        .deluxe { background: #2ecc71; }
-        .star5 { background: gold; color: black; }
+body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #f1f5f9 0%, #edf2f7 100%);
+    min-height: 100vh;
+}
 
-        /* ROOM GRID */
-        .room-grid { display: none; margin-top: 15px; }
-        .rooms-flex { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
-        .room-card { width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 6px; color: white; font-weight: bold; cursor: pointer; }
-        
-        .occupied { background: #e74c3c; border: 2px solid #c0392b; }
-        .available { background: #27ae60; cursor: default; }
+/* Navbar */
+.navbar {
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-medium) 100%);
+    color: white;
+    padding: 1rem 2.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+.navbar h2 { 
+    font-size: 1.5rem; 
+    font-weight: 600;
+    background: linear-gradient(120deg, #fff, #e0e0e0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.logout-btn { 
+    color:white; 
+    text-decoration:none; 
+    font-weight:500;
+    padding: 0.5rem 1.2rem;
+    border-radius: 30px;
+    background: rgba(255,255,255,0.1);
+    transition: var(--transition-smooth);
+}
+.logout-btn:hover { background: rgba(255,255,255,0.2); transform: scale(1.05); }
 
-        /* BOOKING DETAILS SECTION */
-        .booking-section { margin-top: 25px; }
-        .booking-card { 
-            display: none; 
-            background: #fff; 
-            padding: 20px; 
-            border-radius: 8px; 
-            border-left: 10px solid #e74c3c; 
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2); 
-            margin-bottom: 10px;
-        }
-        .booking-card h4 { margin-top: 0; color: #e74c3c; border-bottom: 1px solid #eee; padding-bottom: 5px; }
-    </style>
+/* Container */
+.container { max-width: 1400px; margin: 2rem auto; padding: 0 2rem; }
+h1 { 
+    text-align:center; 
+    margin-bottom:2rem; 
+    font-size:2.5rem; 
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary-medium));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
 
-    <script>
-        function showRoomType(id, siteId) {
-            let site = document.getElementById(siteId);
-            let grids = site.querySelectorAll(".room-grid");
-            grids.forEach(g => { g.style.display = "none"; });
-            document.getElementById(id).style.display = "block";
-        }
+/* Room Types Buttons */
+.room-types { display:flex; gap:1rem; justify-content:center; flex-wrap:wrap; margin-bottom:2rem; }
+.room-type-card { 
+    padding:0.8rem 1.8rem; 
+    border-radius:50px; 
+    font-weight:600; 
+    cursor:pointer; 
+    color:white; 
+    transition:var(--transition-smooth);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+.room-type-card:hover { transform: translateY(-3px); box-shadow: var(--hover-shadow); }
+.room-type-card.normal { background:linear-gradient(135deg, var(--accent-blue), #2980b9); }
+.room-type-card.deluxe { background:linear-gradient(135deg, var(--accent-green), #27ae60); }
+.room-type-card.star5 { background:linear-gradient(135deg, var(--accent-gold), #f39c12); color:#2c3e50; }
 
-        function toggleBooking(bookingId) {
-            // Hide all booking cards first to show only the selected one
-            document.querySelectorAll(".booking-card").forEach(card => {
-                card.style.display = "none";
-            });
-            
-            let target = document.getElementById(bookingId);
-            if (target) {
-                target.style.display = "block";
-                target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            } else {
-                alert("No details found for this specific room.");
-            }
-        }
-    </script>
+/* Room Grid */
+.room-grid { 
+    display:none; 
+    margin-top:1rem; 
+    padding:1.5rem; 
+    background:white; 
+    border-radius:20px; 
+    box-shadow:var(--card-shadow);
+    animation: fadeSlide 0.4s ease;
+}
+@keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.room-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; }
+.room-stats { background: var(--light-bg); padding: 0.8rem 1.5rem; border-radius: 40px; font-weight: 500; }
+.stats-badge { background: var(--primary-dark); color: white; padding: 0.3rem 1rem; border-radius: 30px; font-size: 0.9rem; }
+.view-bookings-btn {
+    background: linear-gradient(135deg, var(--primary-medium), var(--primary-dark));
+    color: white;
+    border: none;
+    padding: 0.6rem 1.5rem;
+    border-radius: 30px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+.view-bookings-btn:hover { transform: translateY(-2px); box-shadow: var(--hover-shadow); }
+
+.rooms-flex { display:flex; flex-wrap:wrap; gap:12px; position:relative; margin-top:1rem; }
+.room-card { 
+    width:55px; 
+    height:55px; 
+    display:flex; 
+    align-items:center; 
+    justify-content:center; 
+    border-radius:12px; 
+    font-weight:700; 
+    cursor:pointer; 
+    color:white;
+    transition: var(--transition-smooth);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+.room-card.available { 
+    background: linear-gradient(145deg, var(--success-green), #229954);
+    cursor: default;
+    opacity: 0.9;
+}
+.room-card.occupied { 
+    background: linear-gradient(145deg, var(--accent-red), #c0392b);
+    animation: gentlePulse 2s infinite;
+    cursor: pointer;
+}
+.room-card.occupied:hover { transform: scale(1.1); filter: brightness(1.1); }
+@keyframes gentlePulse { 
+    0% { box-shadow:0 0 0 0 rgba(231,76,60,0.5); } 
+    70% { box-shadow:0 0 0 10px rgba(231,76,60,0); } 
+    100% { box-shadow:0 0 0 0 rgba(231,76,60,0); } 
+}
+
+/* Modals */
+.modal { 
+    display:none; 
+    position:fixed; 
+    top:0; 
+    left:0; 
+    width:100%; 
+    height:100%; 
+    background:rgba(0,0,0,0.6); 
+    backdrop-filter: blur(5px);
+    justify-content:center; 
+    align-items:center; 
+    z-index:1000; 
+}
+.modal-content { 
+    background:white; 
+    padding:2rem; 
+    border-radius:24px; 
+    width:450px; 
+    max-width:92%; 
+    position:relative;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.3);
+    transform: scale(0.95);
+    animation: modalPop 0.2s ease forwards;
+}
+@keyframes modalPop {
+    to { transform: scale(1); opacity: 1; }
+}
+.close { 
+    position:absolute; 
+    top:1rem; 
+    right:1.2rem; 
+    cursor:pointer; 
+    font-size:1.8rem;
+    color: #888;
+    transition: var(--transition-smooth);
+    line-height: 1;
+}
+.close:hover { color: var(--accent-red); transform: rotate(90deg); }
+
+/* Website Stats Table */
+.website-table { width:100%; border-collapse:collapse; margin-top:1rem; border-radius: 16px; overflow: hidden; }
+.website-table th, .website-table td { border:1px solid #e2e8f0; padding:10px; text-align:left; }
+.website-table th { background:linear-gradient(135deg, #f3f4f6, #e9ecef); color:#1a2634; font-weight:600; }
+.website-table tr { transition: var(--transition-smooth); }
+.website-table tr:hover { background: #f1f5f9; }
+
+/* Booking details inside modal */
+.booking-detail-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 0.5rem 0; margin: 1.5rem 0; }
+.detail-label { font-weight: 600; color: var(--primary-dark); }
+.detail-value { color: #2d3748; }
+
+.empty-state { text-align: center; color: #718096; padding: 2rem; font-style: italic; }
+</style>
+<script>
+// Show selected room type grid
+function showRoomType(id) {
+    document.querySelectorAll(".room-grid").forEach(g => g.style.display = "none");
+    const selected = document.getElementById(id);
+    if (selected) selected.style.display = "block";
+}
+
+// Show booking modal with dynamic data
+function showBooking(name, email, site, cin, cout, total, room_number){
+    document.getElementById("m_name").innerText = name || 'N/A';
+    document.getElementById("m_email").innerText = email || 'N/A';
+    document.getElementById("m_site").innerText = site || 'Direct';
+    document.getElementById("m_in").innerText = cin || '—';
+    document.getElementById("m_out").innerText = cout || '—';
+    document.getElementById("m_total").innerText = total || '0';
+    document.getElementById("m_room").innerText = room_number || '?';
+    document.getElementById("bookingModal").style.display = "flex";
+}
+
+// Generic modal closer
+function closeModal(id){ 
+    document.getElementById(id).style.display = "none"; 
+}
+
+// Show any modal by id
+function showModal(id){ 
+    document.getElementById(id).style.display = "flex"; 
+}
+
+// Optional: close modal when clicking outside content
+window.onclick = function(event) {
+    if (event.target.classList.contains('modal')) {
+        event.target.style.display = 'none';
+    }
+}
+</script>
 </head>
 <body>
 
 <div class="navbar">
-    <h2>{{ hotel_name }} Admin Panel</h2>
-    <a href="{% url 'hotel_login' %}" style="color:white; background:#e74c3c; padding:8px 12px; border-radius:5px; text-decoration:none;">Logout</a>
+    <!-- Dynamic hotel name with fallback -->
+    <h2> {{ hotel_name|default:"Luxury Stay" }} Admin Panel</h2>
+    <a href="{% url 'index' %}" class="logout-btn">← Logout</a>
 </div>
 
 <div class="container">
-    <h1>Hotel Dashboard</h1>
+<h1> Room Management Dashboard</h1>
 
-    {% for site in websites_found %}
-    <div class="website-box" id="site_{{ forloop.counter }}">
-        <div class="website-title">{{ site.website }}</div>
-
-        <div class="room-types">
-            {% for room in site.hotel_data.rooms %}
-            <div class="room-type-card {% if room.room_type == 'Normal' %}normal{% elif room.room_type == 'Delux' %}deluxe{% else %}star5{% endif %}"
-                 onclick="showRoomType('grid_{{ forloop.parentloop.counter }}_{{ forloop.counter }}', 'site_{{ forloop.parentloop.counter }}')">
-                {{ room.room_type }}
-            </div>
-            {% endfor %}
-        </div>
-
-        {% for room in site.hotel_data.rooms %}
-        <div id="grid_{{ forloop.parentloop.counter }}_{{ forloop.counter }}" class="room-grid">
-            <p><b>Room Type:</b> {{ room.room_type }} | <b>Price:</b> ₹{{ room.price }}</p>
-            
-            <div class="rooms-flex">
-                {% for i in ""|center:room.total_rooms %}
-                    {% if forloop.counter <= room.booked_rooms %}
-                        <div class="room-card occupied" 
-                             onclick="toggleBooking('details_{{ forloop.parentloop.parentloop.counter }}_{{ forloop.parentloop.counter }}_{{ forloop.counter }}')">
-                            {{ forloop.counter }}
-                        </div>
-                    {% else %}
-                        <div class="room-card available">{{ forloop.counter }}</div>
-                    {% endif %}
-                {% endfor %}
-            </div>
-
-            <div class="booking-section">
-              {% for booking in room.room_bookings %}
-
-<div id="details_{{ forloop.parentloop.parentloop.counter }}_{{ forloop.parentloop.counter }}_{{ forloop.counter }}" class="booking-card">
-
-<h4>Booking Details</h4>
-
-<p><b>Guest:</b> {{ booking.name }}</p>
-<p><b>Email:</b> {{ booking.email }}</p>
-<p><b>Room Type:</b> {{ booking.room_type }}</p>
-<p><b>Check In:</b> {{ booking.check_in }}</p>
-<p><b>Check Out:</b> {{ booking.check_out }}</p>
-<p><b>Total:</b> ₹{{ booking.total_amount }}</p>
-
+<!-- ROOM TYPE BUTTONS - dynamic, one per room type -->
+<div class="room-types">
+    {% for room in rooms %}
+    <div class="room-type-card 
+        {% if room.room_type == "Normal" %}normal
+        {% elif room.room_type == "Delux" %}deluxe
+        {% elif room.room_type == "5 Star" %}star5
+        {% else %}normal{% endif %}"
+        onclick="showRoomType('grid_{{ forloop.counter }}')">
+        {{ room.room_type }}
+    </div>
+    {% empty %}
+        <div style="color:#888;">No room types configured. Add rooms in context.</div>
+    {% endfor %}
 </div>
 
-{% endfor %}
-            </div>
+<!-- ROOM GRIDS - generated per room type -->
+{% for room in rooms %}
+<div id="grid_{{ forloop.counter }}" class="room-grid">
+    <!-- Room header with stats and view bookings button -->
+    <div class="room-header">
+        <div>
+            <span class="room-stats"> <b>{{ room.room_type }}</b>  |   ₹{{ room.price }}/night  |   {{ room.available_rooms }} available / {{ room.available_rooms|add:room.booked_rooms }} total</span>
+        </div>
+        <button class="view-bookings-btn" onclick="showModal('websiteModal_{{ forloop.counter }}')">
+             View Bookings by Website
+        </button>
+    </div>
+
+    <!-- Interactive room grid -->
+    <div class="rooms-flex">
+        {% for booking in room.room_bookings %}
+        <div class="room-card occupied"
+            onclick="showBooking(
+                '{{ booking.name|escapejs }}',
+                '{{ booking.email|escapejs }}',
+                '{{ booking.website|escapejs }}',
+                '{{ booking.check_in|escapejs }}',
+                '{{ booking.check_out|escapejs }}',
+                '{{ booking.total_amount|escapejs }}',
+                '{{ booking.room_number|escapejs }}'
+            )">
+            {{ booking.room_number }}
+        </div>
+        {% endfor %}
+
+        {% for i in ""|center:room.available_rooms %}
+        <div class="room-card available" title="Room {{ forloop.counter|add:room.booked_rooms }} available">
+            {{ forloop.counter|add:room.booked_rooms }}
         </div>
         {% endfor %}
     </div>
-    {% endfor %}
 </div>
+
+<!-- Website Stats Modal for this room type -->
+<div id="websiteModal_{{ forloop.counter }}" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('websiteModal_{{ forloop.counter }}')">&times;</span>
+        <h3 style="margin-bottom: 1rem;"> {{ room.room_type }} – Bookings by source</h3>
+        {% if room.website_stats %}
+            <table class="website-table">
+                <tr><th>Website / Source</th><th>Room Numbers</th></tr>
+                {% for site, numbers in room.website_stats.items %}
+                <tr>
+                    <td><strong>{{ site }}</strong></td>
+                    <td>
+                        {% if numbers %}
+                            {{ numbers|join:", " }}
+                        {% else %}
+                            <span style="color:#aaa;">—</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        {% else %}
+            <div class="empty-state"> No website bookings recorded yet</div>
+        {% endif %}
+    </div>
+</div>
+{% empty %}
+    <div style="text-align: center; padding: 3rem; background: white; border-radius: 24px;">
+        <h3 style="color: #aaa;">No room data available</h3>
+        <p>Pass room data with context variable 'rooms'.</p>
+    </div>
+{% endfor %}
+
+</div>
+
+<!-- Global Booking Details Modal -->
+<div id="bookingModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('bookingModal')">&times;</span>
+        <h3 style="border-bottom: 2px solid #f0f0f0; padding-bottom: 0.8rem;"> Booking Details</h3>
+        <div class="booking-detail-grid">
+            <span class="detail-label">Guest:</span><span class="detail-value" id="m_name">—</span>
+            <span class="detail-label">Email:</span><span class="detail-value" id="m_email">—</span>
+            <span class="detail-label">Website:</span><span class="detail-value" id="m_site">—</span>
+            <span class="detail-label">Room #:</span><span class="detail-value" id="m_room">—</span>
+            <span class="detail-label">Check In:</span><span class="detail-value" id="m_in">—</span>
+            <span class="detail-label">Check Out:</span><span class="detail-value" id="m_out">—</span>
+            <span class="detail-label">Total (₹):</span><span class="detail-value" id="m_total">—</span>
+        </div>
+        <div style="text-align: right; margin-top: 1rem;">
+            <button onclick="closeModal('bookingModal')" style="background: var(--primary-medium); color: white; border: none; padding: 0.5rem 1.5rem; border-radius: 30px; cursor: pointer;">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Additional script to show first room type by default after load -->
+<script>
+(function() {
+    // Auto-show first room grid when page loads
+    const firstGrid = document.querySelector('.room-grid');
+    if (firstGrid) {
+        firstGrid.style.display = 'block';
+    }
+})();
+
+// also define showModal if not already (already defined above, but keep compatibility)
+window.showModal = function(id) {
+    document.getElementById(id).style.display = "flex";
+}
+</script>
 
 </body>
 </html>
