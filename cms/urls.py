@@ -19,6 +19,7 @@ urlpatterns = [
 
      path('login',login_view,name='login_view'),
      path('results/', hotel_results_page, name='hotel_result'),
+     path("manual-booking/", manual_booking, name="manual_booking"),
+]
      
     
-]
