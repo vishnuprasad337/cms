@@ -1,417 +1,261 @@
+{% extends 'base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html>
-<head>
 
-<title>Hotel CMS</title>
+{% block title %}Dashboard | {{ hotel_name }}{% endblock %}
 
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'assets/css/dashboard.css' %}">
+{% endblock %}
 
-<style>
-
-/* NAVBAR */
-
-.navbar{
-box-shadow:0 2px 10px rgba(0,0,0,0.08);
-}
-
-/* AUTH PANEL */
-
-.auth-box{
-position:absolute;
-right:20px;
-top:70px;
-width:320px;
-background:white;
-padding:25px;
-border-radius:12px;
-box-shadow:0 15px 35px rgba(0,0,0,0.15);
-display:none;
-animation:fadeIn .3s ease;
-z-index:1000;
-}
-
-@keyframes fadeIn{
-from{opacity:0;transform:translateY(-10px)}
-to{opacity:1;transform:translateY(0)}
-}
-
-/* FLIP */
-
-.auth-inner{
-position:relative;
-transition:0.6s;
-transform-style:preserve-3d;
-}
-
-.flip{
-transform:rotateY(180deg);
-}
-
-.side{
-position:absolute;
-width:100%;
-backface-visibility:hidden;
-}
-
-.back{
-transform:rotateY(180deg);
-}
-
-/* SWITCH LINK */
-
-.switch{
-cursor:pointer;
-color:#0d6efd;
-font-weight:500;
-}
-
-.switch:hover{
-text-decoration:underline;
-}
-
-/* HERO */
-
-.hero{
-height:60vh;
-display:flex;
-align-items:center;
-justify-content:center;
-background:#f8f9fa;
-}
-
-.hero h1{
-font-size:48px;
-font-weight:700;
-}
-
-/* FEATURE CARDS */
-
-.feature-card{
-transition:0.3s;
-}
-
-.feature-card:hover{
-transform:translateY(-8px);
-box-shadow:0 15px 30px rgba(0,0,0,0.1);
-}
-
-</style>
-
-</head>
-
-<body>
-
-<!-- NAVBAR -->
-
-<nav class="navbar navbar-expand-lg bg-white">
-
-<div class="container">
-
-<a class="navbar-brand fw-bold">Hotel CMS</a>
-
-<ul class="navbar-nav ms-auto">
-
-<li class="nav-item">
-<a class="nav-link" href="#">Home</a>
-</li>
-
-<li class="nav-item">
-<a class="nav-link" href="#about">About</a>
-</li>
-
-<li class="nav-item">
-<a class="nav-link" href="#contact">Contact</a>
-</li>
-
-<li class="nav-item ms-3">
-
-<button class="btn btn-primary" onclick="toggleAuth()">
-Login
-</button>
-
-</li>
-
-</ul>
-
+{% block content %}
+<!-- Welcome Section -->
+<div class="welcome-section">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1>Welcome back, {{ hotel_name|default:"Hotel Owner" }}! 👋</h1>
+            <p>Here's what's happening with your hotel today.</p>
+        </div>
+        <div class="text-end">
+            <h3 class="mb-0">{{ current_date|date:"l, F j, Y" }}</h3>
+            <p class="mb-0" id="liveTime"></p>
+        </div>
+    </div>
 </div>
 
-</nav>
-
-
-<!-- MESSAGES -->
-
-<div class="container mt-3">
-
-{% if messages %}
-{% for message in messages %}
-
-<div class="alert alert-{{message.tags}} alert-dismissible fade show">
-
-{{message}}
-
-<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-
+<!-- Quick Stats Row -->
+<div class="quick-stats">
+    <div class="quick-stat-item">
+        <div class="quick-stat-icon blue">
+            <i class="bx bx-bed"></i>
+        </div>
+        <div class="quick-stat-info">
+            <h4>{{ total_rooms|default:"0" }}</h4>
+            <p>Total Rooms</p>
+        </div>
+    </div>
+    
+    <div class="quick-stat-item">
+        <div class="quick-stat-icon green">
+            <i class="bx bx-door-open"></i>
+        </div>
+        <div class="quick-stat-info">
+            <h4>{{ available_rooms|default:"0" }}</h4>
+            <p>Available</p>
+        </div>
+    </div>
+    
+    <div class="quick-stat-item">
+        <div class="quick-stat-icon orange">
+            <i class="bx bx-calendar-check"></i>
+        </div>
+        <div class="quick-stat-info">
+            <h4>{{ booked_rooms|default:"0" }}</h4>
+            <p>Booked</p>
+        </div>
+    </div>
+    
+    <div class="quick-stat-item">
+        <div class="quick-stat-icon purple">
+            <i class="bx bx-rupee"></i>
+        </div>
+        <div class="quick-stat-info">
+            <h4>₹{{ total_revenue|floatformat:2|default:"0" }}</h4>
+            <p>Revenue</p>
+        </div>
+    </div>
 </div>
 
-{% endfor %}
-{% endif %}
+<!-- Main Dashboard Cards -->
+<div class="row">
+    <!-- Total Rooms Card -->
+    <div class="col-lg-3 col-md-6 col-sm-12 mb-4">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <span class="fw-semibold d-block mb-1">Total Rooms</span>
+                        <h3 class="card-title mb-2">{{ total_rooms|default:"0" }}</h3>
+                        <small class="text-muted">
+                            <i class="bx bx-building-house me-1"></i>
+                            {{ room_types_count|default:"0" }} room types
+                        </small>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bx bx-building text-primary"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <span class="badge bg-primary">{{ occupancy_rate|default:"0" }}% Occupied</span>
+                </div>
+            </div>
+        </div>
+    </div>
 
+    <!-- Booked Rooms Card -->
+    <div class="col-lg-3 col-md-6 col-sm-12 mb-4">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <span class="fw-semibold d-block mb-1">Booked Rooms</span>
+                        <h3 class="card-title mb-2 text-danger">{{ booked_rooms|default:"0" }}</h3>
+                        <small class="text-muted">
+                            <i class="bx bx-calendar me-1"></i>
+                            {{ active_bookings|default:"0" }} active bookings
+                        </small>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bx bx-calendar-check text-danger"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <span class="badge bg-danger">{{ booked_percentage|default:"0" }}% of total</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Available Rooms Card -->
+    <div class="col-lg-3 col-md-6 col-sm-12 mb-4">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <span class="fw-semibold d-block mb-1">Available Rooms</span>
+                        <h3 class="card-title mb-2 text-success">{{ available_rooms|default:"0" }}</h3>
+                        <small class="text-muted">
+                            <i class="bx bx-door-open me-1"></i>
+                            Ready for booking
+                        </small>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bx bx-check-circle text-success"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <span class="badge bg-success">{{ available_percentage|default:"0" }}% available</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Revenue Card -->
+    <div class="col-lg-3 col-md-6 col-sm-12 mb-4">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <span class="fw-semibold d-block mb-1">Total Revenue</span>
+                        <h3 class="card-title mb-2 text-warning">₹{{ total_revenue|floatformat:2|default:"0" }}</h3>
+                        <small class="text-muted">
+                            <i class="bx bx-trending-up me-1"></i>
+                            +{{ revenue_growth|default:"0" }}% from last month
+                        </small>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bx bx-rupee text-warning"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <span class="badge bg-warning">Avg. ₹{{ avg_booking_value|floatformat:2|default:"0" }}/booking</span>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
+<!-- Charts Row -->
+<div class="row mt-2">
+    <!-- Daily Bookings Chart -->
+    <div class="col-md-8 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bx bx-line-chart me-2 text-primary"></i>
+                    Daily Bookings Trend
+                </h5>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" id="chartRangeDropdown">
+                        Last 7 Days
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" onclick="updateChartRange(7)">Last 7 Days</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="updateChartRange(30)">Last 30 Days</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="updateChartRange(90)">Last 90 Days</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="bookingChart" style="height: 350px;"></div>
+            </div>
+        </div>
+    </div>
 
-<!-- AUTH PANEL -->
-
-<div class="auth-box" id="authBox">
-
-<div class="auth-inner" id="authInner">
-
-<!-- LOGIN -->
-
-<div class="side">
-
-<h5 class="text-center mb-4">Hotel Login</h5>
-
-<form action="{% url 'login_view' %}" method="POST">
-
-{% csrf_token %}
-
-<input
-type="text"
-name="hotel_name"
-class="form-control mb-2"
-placeholder="Hotel Name"
-required
->
-
-<input
-type="password"
-name="password"
-class="form-control mb-3"
-placeholder="Password"
-required
->
-
-<button class="btn btn-primary w-100">
-Login
-</button>
-
-</form>
-
-<div class="text-center mt-3">
-
-<span class="switch" onclick="flipForm()">
-Register ↻
-</span>
-
+    <!-- Room Distribution Chart -->
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bx bx-pie-chart-alt-2 me-2 text-success"></i>
+                    Room Distribution
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="distributionChart" style="height: 300px;"></div>
+                <div class="mt-3" id="distributionLegend">
+                    <!-- Will be populated by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
+<!-- Additional Stats Row -->
+<div class="row">
+    
+    <!-- Quick Actions -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bx bx-bolt me-2 text-warning"></i>
+                    Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'hotel_result' %}" class="btn btn-primary">
+                        <i class="bx bx-bed me-2"></i>Manage Rooms
+                    </a>
+                    <a href="{% url 'index' %}" class="btn btn-success">
+                        <i class="bx bx-calendar-check me-2"></i>View Bookings
+                    </a>
+                    <button class="btn btn-info text-white" onclick="navigateToSection('guests')">
+                        <i class="bx bx-user me-2"></i>Check-in Guest
+                    </button>
+                    <button class="btn btn-warning" onclick="generateReport()">
+                        <i class="bx bx-file me-2"></i>Generate Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
-<div id="toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 1050;"></div>
-<!-- REGISTER -->
-
-<div class="side back">
-
-<h5 class="text-center mb-3">Register Hotel</h5>
-
-<form action="{% url 'hotel_register' %}" method="POST">
-
-{% csrf_token %}
-
-<input name="hotel_name" class="form-control mb-2" placeholder="Hotel Name" required>
-
-<input name="owner_name" class="form-control mb-2" placeholder="Owner Name" required>
-
-<input name="email" class="form-control mb-2" placeholder="Email" required>
-
-<input name="address" class="form-control mb-2" placeholder="Address" required>
-
-<input name="city" class="form-control mb-2" placeholder="City" required>
-
-<input type="password" name="password" class="form-control mb-3" placeholder="Password" required>
-
-<button class="btn btn-success w-100">
-Register
-</button>
-
-</form>
-
-<div class="text-center mt-3">
-
-<span class="switch" onclick="flipForm()">
-↻ Login
-</span>
-
+<!-- Hidden data for JavaScript -->
+<div id="dashboard-data" 
+     data-total-rooms="{{ total_rooms|default:0 }}"
+     data-available-rooms="{{ available_rooms|default:0 }}"
+     data-booked-rooms="{{ booked_rooms|default:0 }}"
+     data-total-revenue="{{ total_revenue|default:0 }}"
+     data-overstay-count="{{ overstay_count|default:0 }}"
+     data-chart-labels='{{ chart_labels|safe|default:"[]" }}'
+     data-chart-values='{{ chart_data|safe|default:"[]" }}'
+     style="display: none;">
 </div>
-
-</div>
-
-</div>
-
-</div>
-
-
-<!-- HERO -->
-
-<section class="hero">
-
-<h1>Hotel Management Platform</h1>
-
-</section>
-
-
-<!-- FEATURES -->
-
-<section class="section py-5" id="about">
-
-<div class="container">
-
-<div class="text-center mb-5">
-
-<h2 class="fw-bold">Powerful Platform Features</h2>
-
-<p class="text-muted">
-Everything you need to manage your hotel operations efficiently.
-</p>
-
-</div>
-
-<div class="row g-4">
-
-<div class="col-md-4">
-
-<div class="feature-card p-4 shadow-sm rounded bg-white h-100 text-center">
-
-<div class="mb-3 fs-1"></div>
-
-<h5 class="fw-semibold">Platform Integration</h5>
-
-<p class="text-muted">
-Connect and manage multiple hotel properties from a single platform.
-</p>
-
-</div>
-
-</div>
-
-<div class="col-md-4">
-
-<div class="feature-card p-4 shadow-sm rounded bg-white h-100 text-center">
-
-<div class="mb-3 fs-1"></div>
-
-<h5 class="fw-semibold">Booking Analytics</h5>
-
-<p class="text-muted">
-Track reservations, revenue, and occupancy rates with detailed analytics.
-</p>
-
-</div>
-
-</div>
-
-<div class="col-md-4">
-
-<div class="feature-card p-4 shadow-sm rounded bg-white h-100 text-center">
-
-<div class="mb-3 fs-1"></div>
-
-<h5 class="fw-semibold">Hotel Dashboard</h5>
-
-<p class="text-muted">
-Manage rooms, bookings, pricing, and availability easily.
-</p>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-</section>
-
-
-<!-- CONTACT -->
-
-<section class="section py-5 bg-light" id="contact">
-
-<div class="container text-center">
-
-<h2 class="fw-bold mb-3">Get in Touch</h2>
-
-<p class="text-muted mb-4">
-Have questions or need help integrating your hotel?
-</p>
-
-<div class="row justify-content-center">
-
-<div class="col-md-6">
-
-<div class="p-4 bg-white shadow-sm rounded">
-
-<p class="mb-2"><strong>Email:</strong> support@hotelcms.com</p>
-
-<p class="mb-2"><strong>Phone:</strong> +91 98765 43210</p>
-
-<p class="mb-0"><strong>Address:</strong> Kochi, Kerala, India</p>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-</section>
-
-
-<script>
-
-/* SHOW PANEL */
-
-function toggleAuth(){
-
-const box=document.getElementById("authBox")
-
-box.style.display = box.style.display === "block" ? "none" : "block"
-
-}
-
-/* FLIP LOGIN / REGISTER */
-
-function flipForm(){
-
-document
-.getElementById("authInner")
-.classList
-.toggle("flip")
-
-}
-
-/* CLOSE WHEN CLICK OUTSIDE */
-
-document.addEventListener("click",function(e){
-
-const box=document.getElementById("authBox")
-
-if(!box.contains(e.target) && !e.target.closest(".btn-primary")){
-box.style.display="none"
-}
-
-})
-
-</script>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
- 
-
-
-
-
-</body>
-</html>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'assets/vendor/libs/apex-charts/apexcharts.js' %}"></script>
+<script src="{% static 'assets/js/dashboard.js' %}"></script>
+{% endblock %}

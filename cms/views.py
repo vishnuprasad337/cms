@@ -5,8 +5,9 @@ from django.shortcuts import redirect,render
 from django.contrib import messages
 from .models import Register,RoomType,Booking
 from django.http import JsonResponse
-from datetime import datetime
-
+from datetime import datetime,timedelta
+from django.utils import timezone
+import json
 # -------------------- Hotel Fetch API View --------------------
 
 class HotelLoginFetch(APIView):
@@ -82,7 +83,7 @@ class HotelLoginFetch(APIView):
 # -------------------- INDEX --------------------
 
 def index(request):
-    return render(request,'index.html')
+    return render(request,'indexmain.html')
 
 
 # -------------------- HOTEL REGISTER --------------------
@@ -109,9 +110,14 @@ def hotel_register(request):
             password=password
         )
 
-        return redirect("index")
+        return redirect("dashboard")
 
-    return render(request, "hotel_result.html")
+    return render(request, "index.html")
+
+
+# --------------------  AUTHENTICATION CONNECTION VIEW --------------------
+
+
 
 
 # -------------------- HOTEL AUTHENTICATION AND HOTEL DETAILS --------------------
@@ -131,24 +137,25 @@ def login_view(request):
 
             request.session["hotel_name"] = hotel.hotel_name
 
-            return redirect("hotel_result")
+            return redirect("dashboard")
 
         except Register.DoesNotExist:
 
             messages.error(request, "Invalid hotel name or password")
             return redirect("index")
 
-    return redirect("index")
+    return redirect("dashboard")
+
+
 
 
 
 from datetime import date
 
-
 def hotel_results_page(request):
     hotel_name = request.session.get("hotel_name")
     if not hotel_name:
-        return redirect("index")
+        return redirect("dashboard")
 
     websites = [
         {"name": "Booking.com", "url": "https://project-demo-11.onrender.com/bookingapp/api/", "api_key": "9f8a7c6b5d4e3f2a1b0c"},
@@ -258,6 +265,14 @@ def hotel_results_page(request):
         room["booked_rooms"] = len(final_room_bookings)
         room["available_rooms"] = total_rooms_count - len(final_room_bookings)
         room["website_stats"] = website_stats
+        total_rooms=sum(room.get("total_rooms",0)for room in hotel_rooms)
+        booked_rooms=sum(room.get("booked_rooms",0)for room in hotel_rooms)
+        available_rooms=sum(room.get("available_rooms",0)for room in hotel_rooms)
+        request.session["dashboard_rooms"] = {
+            "total_rooms": total_rooms,
+            "booked_rooms": booked_rooms,
+            "available_rooms": available_rooms
+        }
 
     return render(request, "hotel_result.html", {"hotel_name": hotel_name, "rooms": hotel_rooms})
 # -------------------- CMS MANUAL BOOKING --------------------
@@ -314,3 +329,80 @@ def manual_booking(request):
 
     except RoomType.DoesNotExist:
         return JsonResponse({"status": "error", "message": "Room type not found"})
+
+
+# -------------------- DASHBOARD --------------------
+def dashboard(request):
+    hotel_name = request.session.get("hotel_name")
+    if not hotel_name:
+        return redirect("index")
+
+    room_types = RoomType.objects.filter(hotel_name=hotel_name)
+    booking = Booking.objects.filter(room_type__hotel_name=hotel_name)
+    dashboard_rooms=request.session.get("dashboard_rooms")
+    if dashboard_rooms:
+        total_rooms = dashboard_rooms.get("total_rooms", 0)
+        booked_rooms = dashboard_rooms.get("booked_rooms", 0)
+        available_rooms = dashboard_rooms.get("available_rooms", 0)
+    else:
+        total_rooms = sum(room.total_rooms for room in room_types)
+        booked_rooms = booking.count()
+        available_rooms = total_rooms - booked_rooms
+
+
+    today = timezone.now().date()
+    
+
+    active_bookings = booking.filter(
+        check_in__lte=today,
+        check_out__gte=today
+    ).count()
+
+    total_revenue = sum(b.total_amount for b in booking)
+    room_types_count = room_types.count()
+
+    occupancy_rate = round((booked_rooms / total_rooms) * 100, 2) if total_rooms else 0
+    booked_percentage = occupancy_rate
+    available_percentage = 100 - occupancy_rate
+    today = timezone.now().date()
+
+    booking = Booking.objects.filter(room_type__hotel_name=hotel_name)
+
+    today_checkins = booking.filter(check_in=today).count()
+    today_checkouts = booking.filter(check_out=today).count()
+
+    today_revenue = sum(b.total_amount for b in booking.filter(check_in=today))
+    today_occupancy = occupancy_rate
+
+    overstay_count = booking.filter(check_out__lt=today, check_in__lte=today).count()
+    chart_labels = []
+    chart_data = []
+
+    for i in range(6, -1, -1):
+        day = today - timedelta(days=i)
+        chart_labels.append(day.strftime("%a"))
+        count = booking.filter(check_in=day).count()
+        chart_data.append(count)
+
+    context = {
+        "hotel_name": hotel_name,
+        "total_rooms": total_rooms,
+        "available_rooms": available_rooms,
+        "booked_rooms": booked_rooms,
+        "room_types_count": room_types_count,
+        "active_bookings": active_bookings,
+        "total_revenue": total_revenue,
+        "occupancy_rate": occupancy_rate,
+        "booked_percentage": booked_percentage,
+        "available_percentage": available_percentage,
+        "today_checkins": today_checkins,
+        "today_checkouts": today_checkouts,
+        "today_revenue": today_revenue,
+        "today_occupancy": today_occupancy,
+        "overstay_count": overstay_count,
+        "chart_labels": json.dumps(chart_labels),
+        "chart_data": json.dumps(chart_data),
+        "current_date": timezone.now(),
+    }
+
+    return render(request, "index.html", context)
