@@ -3,12 +3,18 @@ from .views import *
 
 urlpatterns = [
     
-    path("hotel-login/", HotelLoginFetch.as_view(), name="hotel_login"),
+
 
 # -------------------- INDEX --------------------
     
      path("",index,name='index'),
 
+# -------------------- CONNECTIONS --------------------
+
+  
+  path("connect/",connect_website,name="connect_website"),
+
+  
 # -------------------- DASHBOARD --------------------
     path("dashboard/",dashboard,name='dashboard'),
 # -------------------- HOTEL REGISTER --------------------

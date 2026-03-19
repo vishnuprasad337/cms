@@ -3,83 +3,13 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.shortcuts import redirect,render
 from django.contrib import messages
-from .models import Register,RoomType,Booking
+
+from .models import Register,RoomType,Booking,Website
 from django.http import JsonResponse
 from datetime import datetime,timedelta
 from django.utils import timezone
 import json
-# -------------------- Hotel Fetch API View --------------------
 
-class HotelLoginFetch(APIView):
-
-    def post(self, request):
-
-        hotel_name = request.data.get("name")
-
-        websites = [
-            {
-                "name": "Booking.com",
-                "url": "https://project-demo-11.onrender.com/bookingapp/api/",
-                "api_key": "9f8a7c6b5d4e3f2a1b0c"
-            },
-            {
-                "name":"Bookmyhotel",
-                "url":"https://bookmyhotel-5.onrender.com/bookingapp/api",
-                "api_key":"a7c4e9d2f6b1c8e3d5f0a9b7c6d4e2f1"
-            },
-            {    
-                "name":"Quickstayhub",
-                "url":"https://quickstayhub-2.onrender.com/bookingapp/api",
-                "api_key":"b9d2f4c7a1e8d3f6c5a0b7e9d1c4f2a8"
-            },
-            {    
-                "name":"Homestay",
-                "url":"https://homestay-1-4xmm.onrender.com/bookingapp/api",
-                "api_key":"c7e2a4d9f1b8c6a3d5e0f2b7a9c4d1e8"
-            },
-             {    
-                "name":"veedu",
-                "url":"https://veedu.onrender.com/bookingapp/api",
-                "api_key":"c1a7f9d4b6e3a8c2d5f0b1e7c9a4d2f6"
-            },
-        ]
-
-        result = []
-
-        for site in websites:
-
-            headers = {
-                "API-KEY": site["api_key"]
-            }
-
-            try:
-                response = requests.get(site["url"], headers=headers,timeout=5)
-                
-                if response.status_code != 200:
-                    continue
-
-                try:
-                    data = response.json()
-                except:
-                    continue
-
-                hotels = data if isinstance(data, list) else data.get("results", [])
-
-                for hotel in hotels:
-                    if hotel["name"].lower() == hotel_name.lower():
-
-                        result.append({
-                            "website": site["name"],
-                            "hotel_data": hotel
-                        })
-
-            except requests.exceptions.RequestException:
-                continue
-
-        return Response({
-            "hotel": hotel_name,
-            "websites_found": result
-        })
 # -------------------- INDEX --------------------
 
 def index(request):
@@ -87,8 +17,6 @@ def index(request):
 
 
 # -------------------- HOTEL REGISTER --------------------
-
-
 
 def hotel_register(request):
 
@@ -117,10 +45,46 @@ def hotel_register(request):
 
 # --------------------  AUTHENTICATION CONNECTION VIEW --------------------
 
+def connect_website(request):
+    if request.method == "POST":
+        name = request.POST.get("name")
+        url = request.POST.get("url")
+        hotel_name = request.session.get("hotel_name")
+        api_key=request.POST.get("api_key")
 
+        if not hotel_name:
+            messages.error(request, "Please login first.")
+            return redirect("index")
+        api_url = f"{url}/bookingapp/api/"
 
+        websites = Website.objects.create(
+            name=name,
+            api_url=api_url,
+            api_key=api_key,
+            status="pending"
+        )
 
-# -------------------- HOTEL AUTHENTICATION AND HOTEL DETAILS --------------------
+        payload = {
+            "hotel_name": hotel_name,
+            "url":url,
+            "name": name,      
+            "api_key":api_key
+        }
+
+        try:
+            requests.post(f"{url}/connect-request/", json=payload, timeout=5)
+        except Exception as e:
+            messages.warning(request, f"Connection request failed: {str(e)}")
+
+        messages.success(request, f"Connection request sent to {name}")
+        return redirect("connect_website") 
+
+    
+    approved_sites = Website.objects.filter(status="approved").order_by("id")
+    
+    return render(request, "connect.html", {"approved_sites": approved_sites})
+
+# -------------------- HOTEL AUTHENTICATION --------------------
 
 def login_view(request):
 
@@ -145,9 +109,27 @@ def login_view(request):
             return redirect("index")
 
     return redirect("dashboard")
+def sync_websites():
+    websites = Website.objects.all()
 
+    for site in websites:
+        try:
+            response = requests.get(
+                f"{site.api_url.replace('/bookingapp/api','')}/connection-status/",
+                params={"name": site.name},
+                timeout=5
+            )
 
+            if response.status_code == 200:
+                data = response.json()
 
+                if data.get("status") == "approved":
+                    site.status = "approved"
+                    site.save()
+
+        except Exception as e:
+            print("Sync error:", e)
+# -------------------- HOTEL RESULT --------------------
 
 
 from datetime import date
@@ -156,15 +138,15 @@ def hotel_results_page(request):
     hotel_name = request.session.get("hotel_name")
     if not hotel_name:
         return redirect("dashboard")
-
+    sync_websites()
     websites = [
-        {"name": "Booking.com", "url": "https://project-demo-11.onrender.com/bookingapp/api/", "api_key": "9f8a7c6b5d4e3f2a1b0c"},
-        {"name": "Bookmyhotel", "url": "https://bookmyhotel-5.onrender.com/bookingapp/api/", "api_key": "a7c4e9d2f6b1c8e3d5f0a9b7c6d4e2f1"},
-        {"name": "Quickstayhub", "url": "https://quickstayhub-2.onrender.com/bookingapp/api/", "api_key": "b9d2f4c7a1e8d3f6c5a0b7e9d1c4f2a8"},
-        {"name": "Homestay", "url": "https://homestay-1-4xmm.onrender.com/bookingapp/api/", "api_key": "c7e2a4d9f1b8c6a3d5e0f2b7a9c4d1e8"},
+        
         {"name": "Veedu", "url": "https://veedu.onrender.com/bookingapp/api/", "api_key": "c1a7f9d4b6e3a8c2d5f0b1e7c9a4d2f6"},
     ]
-
+    website=[]
+    for site in websites:
+        if Website.objects.filter(name=site["name"], status="approved").exists():
+            website.append(site)
     hotel_rooms = []
     combined_bookings = []
 

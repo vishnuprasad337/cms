@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Connect Website{% endblock %}
+
+{% block content %}
+<div class="container-xxl py-4">
+  <h3>Connect a New Website</h3>
+  <p>Enter the website details below to send a connection request.</p>
+
+  <form method="POST" action="{% url 'connect_website' %}">
+    {% csrf_token %}
+    
+    <div class="mb-3">
+      <label for="name" class="form-label">User Name</label>
+      <input type="text" class="form-control" id="name" name="name" required>
+    </div>
+
+    <div class="mb-3">
+      <label for="url" class="form-label">API URL</label>
+      <input type="text" class="form-control" id="url" name="url" placeholder="http://127.0.0.1:8001" required>
+    </div>
+
+    <div class="mb-3">
+      <label for="api_key" class="form-label">API KEY</label>
+      <input type="text" class="form-control" id="api_key" name="api_key" required>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Connect</button>
+  </form>
+
+  <!-- Django Messages -->
+  <div class="mt-4">
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  </div>
+
+  <hr class="my-4">
+</div>
+
+
+<div id="notification-bar"
+     style="position:fixed; top:-100px; left:0; width:100%; z-index:2000;
+            background:#ffc107; color:#000; text-align:center;
+            padding:15px; font-weight:500; transition:top 0.5s ease;">
+</div>
+
+
+<script id="approved-data" type="application/json">
+[
+{% for site in approved_sites %}
+  {"name": "{{ site.name|escapejs }}"}{% if not forloop.last %},{% endif %}
+{% endfor %}
+]
+</script>
+
+
+<script>
+  const dataElement = document.getElementById("approved-data");
+  let messagesList = [];
+
+  if (dataElement) {
+    const data = JSON.parse(dataElement.textContent);
+    messagesList = data.map(item => "Request Approved by " + item.name);
+  }
+
+  let index = 0;
+  const bar = document.getElementById("notification-bar");
+
+  function showNextMessage() {
+    if (!bar || index >= messagesList.length) return;
+
+    bar.innerText = messagesList[index];
+
+    
+    bar.style.top = "0";
+
+    
+    setTimeout(() => {
+     
+
+      setTimeout(() => {
+        index++;
+        showNextMessage();
+      }, 500);
+
+    }, 5000);
+  }
+
+  window.onload = showNextMessage;
+</script>
+{% endblock %}
