@@ -28,6 +28,9 @@ urlpatterns = [
      path('login/',login_view,name='login_view'),
      path('results/', hotel_results_page, name='hotel_result'),
      path("manual-booking/", manual_booking, name="manual_booking"),
+     # -------------------- Booking --------------------
+     path("all-bookings/", all_bookings, name="all_bookings"),
+     path("cancel-booking/",cancel_booking,name="cancel_booking"),
 ]
      
     

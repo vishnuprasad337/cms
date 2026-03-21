@@ -44,20 +44,20 @@ def hotel_register(request):
 
 
 # --------------------  AUTHENTICATION CONNECTION VIEW --------------------
-
 def connect_website(request):
     if request.method == "POST":
         name = request.POST.get("name")
         url = request.POST.get("url")
         hotel_name = request.session.get("hotel_name")
-        api_key=request.POST.get("api_key")
+        api_key = request.POST.get("api_key")
 
         if not hotel_name:
             messages.error(request, "Please login first.")
             return redirect("index")
+
         api_url = f"{url}/bookingapp/api/"
 
-        websites = Website.objects.create(
+        Website.objects.create(
             name=name,
             api_url=api_url,
             api_key=api_key,
@@ -66,23 +66,26 @@ def connect_website(request):
 
         payload = {
             "hotel_name": hotel_name,
-            "url":url,
-            "name": name,      
-            "api_key":api_key
+            "url": url,
+            "name": name,
+            "api_key": api_key
         }
 
         try:
             requests.post(f"{url}/connect-request/", json=payload, timeout=5)
         except Exception as e:
-            messages.warning(request, f"Connection request failed: {str(e)}")
+            pass  # no need message now
 
-        messages.success(request, f"Connection request sent to {name}")
-        return redirect("connect_website") 
+        return redirect("connect_website")
 
     
+   
+
     approved_sites = Website.objects.filter(status="approved").order_by("id")
-    
-    return render(request, "connect.html", {"approved_sites": approved_sites})
+
+    return render(request, "connect.html", {
+        "approved_sites": approved_sites
+    })
 
 # -------------------- HOTEL AUTHENTICATION --------------------
 
@@ -185,10 +188,16 @@ def hotel_results_page(request):
         
         for b in db_room.bookings.all():
             combined_bookings.append({
-                "name": b.guest_name, "email": b.guest_email, "room_type": rt_name,
-                "check_in": b.check_in, "check_out": b.check_out, "total_amount": b.total_amount,
-                "website": "CMS", "room_number": b.room_number
-            })
+    "name": b.guest_name,
+    "email": b.guest_email,
+    "room_type": rt_name,
+    "check_in": b.check_in,
+    "check_out": b.check_out,
+    "total_amount": b.total_amount,
+    "website": "CMS",
+    "room_number": b.room_number,
+    "status": b.status  
+})
 
     
     for room in hotel_rooms:
@@ -235,7 +244,11 @@ def hotel_results_page(request):
             website_stats[site].append(b["room_number"])
 
        
-        lookup = {int(b["room_number"]): b for b in final_room_bookings if b.get("room_number")}
+        lookup = {
+    int(b["room_number"]): b
+    for b in final_room_bookings
+    if b.get("room_number") and b.get("status", "Active") == "Active"
+}
         ordered_grid = []
         for i in range(1, total_rooms_count + 1):
             if i in lookup:
@@ -255,7 +268,7 @@ def hotel_results_page(request):
             "booked_rooms": booked_rooms,
             "available_rooms": available_rooms
         }
-
+    print(f"Processing {hotel_name}: Found {len(hotel_rooms)} types and {len(combined_bookings)} total bookings.")
     return render(request, "hotel_result.html", {"hotel_name": hotel_name, "rooms": hotel_rooms})
 # -------------------- CMS MANUAL BOOKING --------------------
 
@@ -270,6 +283,8 @@ def manual_booking(request):
     guest_email = request.POST.get("guest_email")
     check_in = request.POST.get("check_in")
     check_out = request.POST.get("check_out")
+    phone = request.POST.get("phone")
+    payment_mode = request.POST.get("payment_mode")
 
     try:
         room = RoomType.objects.get(room_type=room_type_name, hotel_name=hotel_name)
@@ -292,16 +307,18 @@ def manual_booking(request):
         total_amount = nights * room.price
 
         booking = Booking.objects.create(
-            room_type=room,
-            guest_name=guest_name,
-            guest_email=guest_email,
-            room_number=room_number,
-            check_in=check_in_date,
-            check_out=check_out_date,
-            total_amount=total_amount,
-            website="Direct"
-        )
-
+        room_type=room,
+        guest_name=guest_name,
+        guest_email=guest_email,
+        room_number=room_number,
+        check_in=check_in_date,
+        check_out=check_out_date,
+        total_amount=total_amount,
+        website="Direct",
+        phone=phone,
+        payment_mode=payment_mode,
+        status="Active"   
+)
         return JsonResponse({
             "status": "success",
             "room_number": booking.room_number,
@@ -388,3 +405,176 @@ def dashboard(request):
     }
 
     return render(request, "index.html", context)
+
+     # ------------------ BOOKING DETAILS ------------------
+def room_type(rt):
+    if not rt:
+        return "unknown"
+    return rt.lower().replace("-", " ").strip()
+
+
+def all_bookings(request):
+    hotel_name = request.session.get("hotel_name")
+    if not hotel_name:
+        return redirect("index")
+
+    websites = [
+        {
+            "name": "Veedu",
+            "url": "https://veedu.onrender.com/bookingapp/api/",
+            "api_key": "c1a7f9d4b6e3a8c2d5f0b1e7c9a4d2f6"
+        },
+    ]
+
+    today = date.today()
+    combined_bookings = []
+    hotel_rooms = []
+
+    cancelled_external = request.session.get("cancelled_external", [])
+
+   
+    for site in websites:
+        try:
+            res = requests.get(site["url"], headers={"API-KEY": site["api_key"]}, timeout=5)
+
+            if res.status_code == 200:
+                data = res.json()
+                hotels = data if isinstance(data, list) else data.get("results", [])
+
+                for hotel in hotels:
+                    if hotel.get("name", "").lower() == hotel_name.lower():
+
+                        if not hotel_rooms:
+                            hotel_rooms = hotel.get("rooms", [])
+
+                        for b in hotel.get("bookings", []):
+                            count = b.get("count", 1)
+
+                            for _ in range(count):
+
+                               
+                                booking_uuid = f"{b.get('email')}_{b.get('check_in')}_{b.get('room_type')}"
+
+                                rt = room_type(b.get("room_type"))
+
+                                status = "Inactive" if booking_uuid in cancelled_external else "Active"
+
+                                combined_bookings.append({
+                                    "booking_id": booking_uuid,
+                                    "source": "external",
+                                    "name": b.get("name"),
+                                    "email": b.get("email"),
+                                    "room_type": rt,
+                                    "check_in": b.get("check_in"),
+                                    "check_out": b.get("check_out"),
+                                    "total_amount": float(b.get("total_amount", 0)),
+                                    "payment_mode": b.get("payment_mode", "Online"),
+                                    "website": site["name"],
+                                    "room_number": None,
+                                    "status": status
+                                })
+        except:
+            continue
+
+   
+    cms_bookings = Booking.objects.filter(room_type__hotel_name=hotel_name)
+
+    for b in cms_bookings:
+        combined_bookings.append({
+            "booking_id": b.id,
+            "source": "cms",
+            "name": b.guest_name,
+            "email": b.guest_email,
+            "room_type": room_type(b.room_type.room_type),
+            "room_number": int(b.room_number),
+            "check_in": b.check_in,
+            "check_out": b.check_out,
+            "total_amount": float(b.total_amount),
+            "payment_mode": b.payment_mode,
+            "status": b.status,
+            "website": "CMS"
+        })
+
+   
+    final_bookings = []
+
+    for room in hotel_rooms:
+        rt_name = room_type(room.get("room_type"))
+        total_rooms = room.get("total_rooms", 0)
+        price = float(room.get("price", 0))
+
+        occupied = set()
+
+       
+        for b in combined_bookings:
+            if b["room_type"] == rt_name and b.get("room_number") and b["status"] == "Active":
+                occupied.add(int(b["room_number"]))
+
+        for b in combined_bookings:
+            if b["room_type"] != rt_name:
+                continue
+
+           
+            if not b.get("room_number") and b["status"] == "Active":
+                for i in range(1, total_rooms + 1):
+                    if i not in occupied:
+                        b["room_number"] = i
+                        occupied.add(i)
+                        break
+
+           
+            try:
+                cout = b["check_out"]
+                if isinstance(cout, str):
+                    cout = datetime.strptime(cout, "%Y-%m-%d").date()
+
+                overstay = today > cout
+                extra_days = (today - cout).days if overstay else 0
+                extra_payment = extra_days * price
+            except:
+                overstay = False
+                extra_payment = 0
+
+            b["overstay"] = overstay
+            b["extra_payment"] = round(extra_payment, 2)
+
+            final_bookings.append(b)
+
+    return render(request, "booking.html", {
+        "bookings": final_bookings
+    })
+
+
+def cancel_booking(request):
+    if request.method != "POST":
+        return JsonResponse({"status": "error", "message": "Invalid request"})
+
+    data = json.loads(request.body)
+    booking_id = data.get("id")
+    source = data.get("source")
+
+    hotel_name = request.session.get("hotel_name")
+
+   
+    if source == "cms":
+        try:
+            booking = Booking.objects.get(id=booking_id)
+            booking.status = "Inactive"   
+            booking.save()
+
+            return JsonResponse({"status": "success"})
+        except Booking.DoesNotExist:
+            return JsonResponse({"status": "error", "message": "Booking not found"})
+
+    
+    elif source == "external":
+        cancelled = request.session.get("cancelled_external", [])
+
+        if booking_id not in cancelled:
+            cancelled.append(booking_id)
+
+        request.session["cancelled_external"] = cancelled
+
+        return JsonResponse({"status": "success"})
+
+    return JsonResponse({"status": "error", "message": "Unknown source"})

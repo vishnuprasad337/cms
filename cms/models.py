@@ -45,26 +45,37 @@ class RoomType(models.Model):
     def __str__(self):
         return f"{self.hotel_name} - {self.room_type}"
 
-
 class Booking(models.Model):
 
-    room_type = models.ForeignKey(
-        RoomType,
-        related_name="bookings",
-        on_delete=models.CASCADE
+    BOOKING_STATUS = [
+        ("Active", "Active"),          
+        ("CheckedOut", "Checked Out"), 
+        ("Cancelled", "Cancelled"),    
+    ]
+
+    phone = models.CharField(max_length=15, null=True, blank=True)
+    payment_mode = models.CharField(max_length=20, null=True, blank=True)
+
+    status = models.CharField(
+        max_length=20,
+        choices=BOOKING_STATUS,
+        default="Active"
     )
 
+    
+    room_type = models.ForeignKey("RoomType", on_delete=models.CASCADE, related_name="bookings")
     guest_name = models.CharField(max_length=100)
     guest_email = models.EmailField()
-
-    room_number = models.IntegerField(default=1)
-
+    room_number = models.IntegerField()
     check_in = models.DateField()
     check_out = models.DateField()
-
-    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
-
+    total_amount = models.FloatField()
     website = models.CharField(max_length=50, default="Direct")
+    id_proof_photo = models.ImageField(   upload_to="id_proofs/",   null=True,   blank=True
+     )
+       
+
+      
 
     def __str__(self):
-        return f"{self.guest_name} - Room {self.room_number}"
+        return f"{self.guest_name}"

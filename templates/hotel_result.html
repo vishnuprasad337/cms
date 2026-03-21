@@ -20,7 +20,7 @@
         --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    /* Room Types Buttons */
+    
     .room-types { display:flex; gap:1rem; justify-content:center; flex-wrap:wrap; margin-bottom:2rem; }
     .room-type-card { 
         padding:0.8rem 1.8rem; 
@@ -97,37 +97,63 @@
     }
 
     /* Modals */
-    .modal { 
-        display:none; 
-        position:fixed; 
-        top:0; left:0; width:100%; height:100%; 
-        background:rgba(0,0,0,0.6); 
-        backdrop-filter: blur(5px);
-        justify-content:center; 
-        align-items:center; 
-        z-index:1000; 
-    }
-    .modal-content { 
-        background:white; padding:2rem; border-radius:24px; width:500px; max-width:92%; position:relative;
-        box-shadow: 0 30px 60px rgba(0,0,0,0.3); animation: modalPop 0.2s ease forwards;
-    }
+    .modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(4px);
+    z-index: 2000;
+
+    display: flex;
+    justify-content: center;
+    align-items: center; 
+    padding: 1rem;
+}
+
+.modal-content {
+    width: 100%;
+    max-width: 420px;
+    max-height: 90vh; 
+    overflow-y: auto; 
+    
+    background: white;
+    padding: 1.2rem;
+    border-radius: 16px;
+    position: relative;
+
+    box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+    animation: modalPop 0.25s ease;
+}
     @keyframes modalPop { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     .close { position:absolute; top:1rem; right:1.2rem; cursor:pointer; font-size:1.8rem; color: #888; transition: var(--transition-smooth); }
     .close:hover { color: var(--accent-red); transform: rotate(90deg); }
 
-    /* Form Styles */
-    .booking-form { margin-top: 1.5rem; }
-    .form-group { margin-bottom: 1.2rem; }
-    .form-group label { display: block; font-weight: 600; color: var(--primary-dark); margin-bottom: 0.4rem; }
-    .form-group input { width: 100%; padding: 0.7rem 1rem; border: 2px solid #e2e8f0; border-radius: 12px; transition: var(--transition-smooth); }
-    .form-group input:focus { outline: none; border-color: var(--accent-blue); }
-    .form-group input[readonly] { background-color: #f8fafc; cursor: not-allowed; }
     
-    .submit-btn { 
-        background: linear-gradient(135deg, var(--success-green), #229954); 
-        color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 30px; 
-        font-weight: 600; cursor: pointer; width: 100%; margin-top: 1rem; transition: var(--transition-smooth);
-    }
+    .booking-form {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+}
+
+.form-group {
+    margin-bottom: 0.6rem; 
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 0.65rem 0.9rem;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 0.9rem;
+}
+    .submit-btn {
+    position: sticky;
+    bottom: 0;
+    background: linear-gradient(135deg, var(--success-green), #229954);
+    margin-top: 10px;
+}
     .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(39, 174, 96, 0.3); }
     .warning-btn { background: linear-gradient(135deg, var(--warning-orange), #e67e22); }
 
@@ -142,6 +168,27 @@
         font-size: 1.2rem;
         font-weight: 700;
         color: #e67e22;
+    }
+    .flex-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+
+    }
+    @media (max-width: 480px) {
+    .modal-content {
+        max-width: 100%;
+        border-radius: 12px;
+        padding: 1rem;
+    }
+
+    .flex-2 {
+        grid-template-columns: 1fr; 
+    }
+}
+    .checkout-btn {
+        background: linear-gradient(135deg, var(--accent-blue), #2980b9);
+        width: 48%;
     }
 </style>
 {% endblock %}
@@ -237,20 +284,87 @@
                 <label>Guest Email</label>
                 <input type="email" id="booking_guest_email" placeholder="Enter guest email" required>
             </div>
+             <div class="form-group">
+    <label>Guests</label>
+    <select id="guest_count" onchange="generateGuestFields()">
+        <option value="1">1 Guest</option>
+        <option value="2">2 Guests</option>
+        <option value="3">3 Guests</option>
+        <option value="4">4 Guests</option>
+    </select>
+</div>
+            <div class="flex-2">
+    <div class="form-group">
+        <label>Check In</label>
+        <input type="date" id="booking_check_in" onchange="calculateTotal()" required>
+    </div>
+
+    <div class="form-group">
+        <label>Check Out</label>
+        <input type="date" id="booking_check_out" onchange="calculateTotal()" required>
+    </div>
+</div>
             <div class="form-group">
-                <label>Check In Date</label>
-                <input type="date" id="booking_check_in" onchange="calculateTotal()" required>
-            </div>
-            <div class="form-group">
-                <label>Check Out Date</label>
-                <input type="date" id="booking_check_out" onchange="calculateTotal()" required>
-            </div>
+             <label>ID Proof Type</label>
+             <select id="id_type">
+            <option value="Aadhar">Aadhar Card</option>
+           <option value="Passport">Passport</option>
+           <option value="Driving License">Driving License</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Upload ID Proof</label>
+        <input type="file" id="main_guest_photo" accept="image/*" required>
+     </div>
             <div class="form-group">
                 <label>Total Amount (₹)</label>
                 <input type="text" id="booking_total" readonly>
             </div>
             <button type="button" class="submit-btn" onclick="submitBooking()">Confirm Booking</button>
         </div>
+       
+
+<div id="extra_guests"></div>
+    </div>
+
+</div>
+<div id="paymentModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('paymentModal')">&times;</span>
+        <h3>Payment</h3>
+
+        <div class="form-group">
+            <label>Guest Name</label>
+            <input type="text" id="pay_name" readonly>
+        </div>
+
+        <div class="form-group">
+            <label>Email</label>
+            <input type="text" id="pay_email" readonly>
+        </div>
+
+        <div class="form-group">
+            <label>Phone Number</label>
+            <input type="text" id="pay_phone" placeholder="Enter phone number">
+        </div>
+
+
+        <div class="form-group">
+            <label>Total Amount</label>
+            <input type="text" id="pay_amount" readonly>
+        </div>
+
+        <div class="form-group">
+            <label>Payment Mode</label>
+            <select id="pay_mode">
+                <option>Cash</option>
+                <option>GPay</option>
+                <option>Card</option>
+            </select>
+        </div>
+
+        <button class="submit-btn" onclick="confirmPayment()">Pay & Confirm</button>
     </div>
 </div>
 
@@ -266,7 +380,7 @@
             <span class="detail-label">Check In:</span><span id="m_in">—</span>
             <span class="detail-label">Check Out:</span><span id="m_out">—</span>
             <span class="detail-label">Room Price:</span><span>₹<span id="m_price">0</span>/night</span>
-            <span class="detail-label">Total Paid:</span><span>₹<span id="m_total">0</span></span>
+            <span class="detail-label">Total payment:</span><span>₹<span id="m_total">0</span></span>
         </div>
         
         <div id="overstaySection" class="overstay-warning" style="display: none;">
@@ -281,7 +395,10 @@
                     (Calculation: <span id="extra_days_calc">0</span> days × ₹<span id="extra_price_calc">0</span> = ₹<span id="extra_total_calc">0</span>)
                 </div>
             </div>
-            <button class="submit-btn warning-btn" style="width: auto;" onclick="processOverstayPayment()">Process Payment (₹<span id="process_payment_amount">0</span>)</button>
+            <div class="flex-row">
+                <button class="submit-btn warning-btn" style="width:48%;" onclick="processOverstayPayment()">₹<span id="process_payment_amount">0</span></button>
+                <button class="submit-btn checkout-btn" style="width:48%;" onclick="checkoutGuest()">Checkout</button>
+            </div>
         </div>
     </div>
 </div>
@@ -289,173 +406,145 @@
 
 {% block extra_js %}
 <script>
-    // Store room price for current booking
-    let currentRoomPrice = 0;
+let currentRoomPrice = 0;
 
-    // Close modal when clicking background
-    window.onclick = function(event) {
-        if (event.target.classList.contains('modal')) {
-            event.target.style.display = "none";
+
+window.onclick = function(event) {
+    if (event.target.classList.contains('modal')) {
+        event.target.style.display = "none";
+    }
+}
+
+function showRoomType(id) {
+    document.querySelectorAll(".room-grid").forEach(g => g.style.display = "none");
+    const selected = document.getElementById(id);
+    if (selected) selected.style.display = "block";
+}
+
+function showModal(id) { 
+    document.getElementById(id).style.display = "flex"; 
+}
+function closeModal(id) { 
+    document.getElementById(id).style.display = "none"; 
+}
+
+function showBooking(name, email, site, cin, cout, total, room_number, extra_days, extra_payment, room_price) {
+    currentRoomPrice = parseFloat(room_price) || 0;
+    document.getElementById("m_name").innerText = name || 'N/A';
+    document.getElementById("m_email").innerText = email || 'N/A';
+    document.getElementById("m_site").innerText = site || 'Direct';
+    document.getElementById("m_room").innerText = room_number || '?';
+    document.getElementById("m_in").innerText = cin || '—';
+    document.getElementById("m_out").innerText = cout || '—';
+    document.getElementById("m_price").innerText = currentRoomPrice;
+    document.getElementById("m_total").innerText = total || '0';
+
+    const days = parseInt(extra_days) || 0;
+    const calculatedPayment = days * currentRoomPrice;
+
+    document.getElementById("extra_days_display").innerText = days;
+    document.getElementById("extra_price_display").innerText = currentRoomPrice;
+    document.getElementById("extra_payment_display").innerText = calculatedPayment.toFixed(2);
+
+    document.getElementById("extra_days_calc").innerText = days;
+    document.getElementById("extra_price_calc").innerText = currentRoomPrice;
+    document.getElementById("extra_total_calc").innerText = calculatedPayment.toFixed(2);
+
+    document.getElementById("process_payment_amount").innerText = calculatedPayment.toFixed(2);
+    document.getElementById("overstaySection").style.display = days > 0 ? "block" : "none";
+
+    showModal("bookingModal");
+}
+
+
+function updateRoomStatus(roomNumber, status) {
+    const rooms = document.querySelectorAll('.room-card');
+    rooms.forEach(r => {
+        if (r.innerText == roomNumber) {
+            r.classList.remove('available', 'occupied', 'overstay');
+            if (status === 'available') r.classList.add('available');
+            if (status === 'occupied') r.classList.add('occupied');
+            if (status === 'overstay') r.classList.add('overstay');
         }
-    }
+    });
+}
 
-    function showRoomType(id) {
-        document.querySelectorAll(".room-grid").forEach(g => g.style.display = "none");
-        const selected = document.getElementById(id);
-        if (selected) selected.style.display = "block";
-    }
+function checkoutGuest() {
+    const roomNumber = document.getElementById("m_room").innerText;
+    const guestName = document.getElementById("m_name").innerText;
 
-    function showModal(id) { 
-        document.getElementById(id).style.display = "flex"; 
-    }
-    
-    function closeModal(id) { 
-        document.getElementById(id).style.display = "none"; 
-    }
-
-    function showBooking(name, email, site, cin, cout, total, room_number, extra_days, extra_payment, room_price) {
-        // Store room price for calculations
-        currentRoomPrice = parseFloat(room_price) || 0;
-        
-        // Format and set the values
-        document.getElementById("m_name").innerText = name || 'N/A';
-        document.getElementById("m_email").innerText = email || 'N/A';
-        document.getElementById("m_site").innerText = site || 'Direct';
-        document.getElementById("m_room").innerText = room_number || '?';
-        document.getElementById("m_in").innerText = cin || '—';
-        document.getElementById("m_out").innerText = cout || '—';
-        document.getElementById("m_price").innerText = currentRoomPrice;
-        document.getElementById("m_total").innerText = total || '0';
-        
-        // Parse extra days
-        const days = parseInt(extra_days) || 0;
-        
-        // Calculate extra payment correctly: days * price per night
-        const calculatedPayment = days * currentRoomPrice;
-        
-        // Update all displays
-        document.getElementById("extra_days_display").innerText = days;
-        document.getElementById("extra_price_display").innerText = currentRoomPrice;
-        document.getElementById("extra_payment_display").innerText = calculatedPayment.toFixed(2);
-        
-        // Update calculation breakdown
-        document.getElementById("extra_days_calc").innerText = days;
-        document.getElementById("extra_price_calc").innerText = currentRoomPrice;
-        document.getElementById("extra_total_calc").innerText = calculatedPayment.toFixed(2);
-        
-        // Update process payment button amount
-        document.getElementById("process_payment_amount").innerText = calculatedPayment.toFixed(2);
-        
-        // Show/hide overstay section based on days
-        if (days > 0) {
-            document.getElementById("overstaySection").style.display = "block";
+    fetch("/checkout-guest/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": "{{ csrf_token }}"
+        },
+        body: JSON.stringify({ room_number: roomNumber, guest_name: guestName })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === "success") {
+            alert("Guest checked out successfully!");
+            updateRoomStatus(roomNumber, "available");
+            closeModal("bookingModal");
         } else {
-            document.getElementById("overstaySection").style.display = "none";
+            alert(data.message);
         }
-        
-        showModal("bookingModal");
-    }
+    });
+}
 
-    function showBookingForm(roomType, roomNumber, price) {
-        document.getElementById("booking_room_type").value = roomType;
-        document.getElementById("booking_room_number").value = roomNumber;
-        document.getElementById("booking_price").value = price;
-        
-        // Set default dates
-        const today = new Date();
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        
-        const formatDate = (date) => {
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
-        };
-        
-        document.getElementById("booking_check_in").value = formatDate(today);
-        document.getElementById("booking_check_out").value = formatDate(tomorrow);
-        
-        calculateTotal();
-        showModal("bookingFormModal");
-    }
 
-    function calculateTotal() {
-        const cin = new Date(document.getElementById("booking_check_in").value);
-        const cout = new Date(document.getElementById("booking_check_out").value);
-        const price = parseFloat(document.getElementById("booking_price").value) || 0;
-        
-        if (cin && cout && cout > cin) {
-            const nights = Math.ceil((cout - cin) / (1000 * 60 * 60 * 24));
-            document.getElementById("booking_total").value = (nights * price).toFixed(2);
+function submitBooking() {
+    const guestName = document.getElementById("booking_guest_name").value;
+    const guestEmail = document.getElementById("booking_guest_email").value;
+    const total = document.getElementById("booking_total").value;
+
+    if (!guestName || !guestEmail) { alert("Fill all fields"); return; }
+
+    document.getElementById("pay_name").value = guestName;
+    document.getElementById("pay_email").value = guestEmail;
+    document.getElementById("pay_amount").value = total;
+
+    closeModal("bookingFormModal");
+    showModal("paymentModal");
+}
+
+function confirmPayment() {
+    const phone = document.getElementById("pay_phone").value;
+    const mode = document.getElementById("pay_mode").value;
+    if (!phone) { alert("Enter phone number"); return; }
+
+    const formData = new FormData();
+    formData.append("room_type", document.getElementById("booking_room_type").value);
+    formData.append("room_number", document.getElementById("booking_room_number").value);
+    formData.append("guest_name", document.getElementById("booking_guest_name").value);
+    formData.append("guest_email", document.getElementById("booking_guest_email").value);
+    formData.append("check_in", document.getElementById("booking_check_in").value);
+    formData.append("check_out", document.getElementById("booking_check_out").value);
+    formData.append("phone", phone);
+    formData.append("payment_mode", mode);
+
+    fetch("/manual-booking/", {
+        method: "POST",
+        body: formData,
+        headers: { "X-CSRFToken": "{{ csrf_token }}" }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === "success") {
+            alert("Payment Successful & Room Booked!");
+            updateRoomStatus(document.getElementById("booking_room_number").value, "occupied"); // mark red
+            closeModal("paymentModal");
+        } else {
+            alert(data.message);
         }
-    }
+    });
+}
 
-    function submitBooking() {
-        // Validate form
-        const guestName = document.getElementById("booking_guest_name").value;
-        const guestEmail = document.getElementById("booking_guest_email").value;
-        const checkIn = document.getElementById("booking_check_in").value;
-        const checkOut = document.getElementById("booking_check_out").value;
-        
-        if (!guestName || !guestEmail || !checkIn || !checkOut) {
-            alert("Please fill in all fields");
-            return;
-        }
-        
-        const formData = new FormData();
-        formData.append("room_type", document.getElementById("booking_room_type").value);
-        formData.append("room_number", document.getElementById("booking_room_number").value);
-        formData.append("guest_name", guestName);
-        formData.append("guest_email", guestEmail);
-        formData.append("check_in", checkIn);
-        formData.append("check_out", checkOut);
-        
-        fetch("/manual-booking/", {
-            method: "POST",
-            body: formData,
-            headers: { 
-                "X-CSRFToken": "{{ csrf_token }}" 
-            }
-        })
-        .then(r => r.json())
-        .then(data => {
-            if (data.status === "success") { 
-                alert("Booking confirmed successfully!");
-                location.reload(); 
-            }
-            else { 
-                alert("Error: " + data.message); 
-            }
-        })
-        .catch(error => {
-            alert("An error occurred. Please try again.");
-            console.error("Error:", error);
-        });
-    }
 
-    function processOverstayPayment() {
-        const roomNumber = document.getElementById("m_room").innerText;
-        const guestName = document.getElementById("m_name").innerText;
-        const extraDays = document.getElementById("extra_days_display").innerText;
-        const roomPrice = document.getElementById("extra_price_display").innerText;
-        const extraPayment = document.getElementById("extra_payment_display").innerText;
-        
-        if (confirm(`Process extra payment of ₹${extraPayment} for ${extraDays} extra days at ₹${roomPrice}/night?`)) {
-            // Here you would make an API call to process the payment
-            alert(`Payment of ₹${extraPayment} processed successfully for ${guestName} in Room ${roomNumber}!`);
-            // After successful payment, you might want to update the database
-            // For now, we'll just reload the page
-            location.reload();
-        }
-    }
-
-    // Show first grid by default when page loads
-    window.onload = () => { 
-        const firstGrid = document.querySelector('.room-grid'); 
-        if (firstGrid) {
-            firstGrid.style.display = 'block'; 
-        }
-    };
+window.onload = () => { 
+    const firstGrid = document.querySelector('.room-grid'); 
+    if (firstGrid) firstGrid.style.display = 'block'; 
+};
 </script>
 {% endblock %}

@@ -1,0 +1,33 @@
+/* Popup Message */
+#popup-message {
+    position: fixed;
+    top: -100px;
+    left: 50%;
+    transform: translateX(-50%);
+    min-width: 300px;
+    max-width: 500px;
+    background: #2ecc71;
+    color: #fff;
+    padding: 15px 20px;
+    border-radius: 10px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+    text-align: center;
+    font-weight: 500;
+    z-index: 3000;
+    transition: top 0.5s ease;
+}
+
+/* Notification Bar */
+#notification-bar {
+    position: fixed;
+    top: -100px;
+    left: 0;
+    width: 100%;
+    z-index: 2000;
+    background: #ffc107;
+    color: #000;
+    text-align: center;
+    padding: 15px;
+    font-weight: 500;
+    transition: top 0.5s ease;
+}

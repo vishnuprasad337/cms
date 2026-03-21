@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}All Bookings{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'assets/css/all_bookings.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<h4 class="fw-bold py-3 mb-4">
+    <span class="text-muted fw-light">Hotel Management /</span> All Bookings
+</h4>
+
+<!-- FILTER -->
+<div class="filter-wrap">
+    <button class="filter-btn active" onclick="filterType('all', this)">All</button>
+    <button class="filter-btn" onclick="filterType('Normal', this)">Normal</button>
+    <button class="filter-btn" onclick="filterType('Delux', this)">Delux</button>
+    <button class="filter-btn" onclick="filterType('5 Star', this)">5 Star</button>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle modern-table">
+                <thead>
+                    <tr>
+                        <th>Guest</th>
+                        <th>Source</th>
+                        <th>Room</th>
+                        <th>Stay</th>
+                        <th>Payment</th>
+                        <th>Status</th>
+                        <th>Extra</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for b in bookings %}
+                    <tr data-room-type="{{ b.room_type }}">
+                        <td>
+                            <div class="fw-semibold">{{ b.name }}</div>
+                            <small class="text-muted">{{ b.email }}</small>
+                        </td>
+                        <td>
+                            {% if b.website == "CMS" %}
+                                <span class="badge bg-success">Direct</span>
+                            {% else %}
+                                <span class="badge bg-primary">{{ b.website }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if b.room_number %}
+                                <strong>#{{ b.room_number }}</strong>
+                            {% else %}
+                                <span class="text-danger">NA</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <small>{{ b.check_in }} → {{ b.check_out }}</small>
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark">
+                                {{ b.payment_mode|default:"Online" }}
+                            </span><br>
+                            ₹{{ b.total_amount }}
+                        </td>
+                        <td>
+                            {% if b.status == "Active" %}
+                                <span class="badge bg-success">Active</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if b.overstay %}
+                                <span class="badge bg-danger">₹{{ b.extra_payment }}</span>
+                            {% else %}
+                                <span class="badge bg-success">0</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if b.status == "Active" %}
+                                <div class="d-flex gap-1">
+                                    <button class="btn-action checkout"
+                                        onclick="openCheckoutModal('{{ b.booking_id }}','{{ b.source }}','{{ b.name|escapejs }}','{{ b.extra_payment }}')">
+                                        Checkout
+                                    </button>
+                                    <button class="btn-action cancel"
+                                        onclick="openCancelModal('{{ b.booking_id }}','{{ b.source }}','{{ b.name|escapejs }}')">
+                                        Cancel
+                                    </button>
+                                </div>
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modals -->
+<div id="checkoutModal" class="modal">
+    <div class="modal-box">
+        <h5>Checkout</h5>
+        <p id="checkoutText"></p>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="confirmCheckout()">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<div id="cancelModal" class="modal">
+    <div class="modal-box">
+        <h5>Cancel Booking</h5>
+        <p id="cancelText"></p>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closeModal()">Back</button>
+            <button class="btn btn-danger" onclick="confirmCancel()">Cancel Booking</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'assets/js/all_bookings.js' %}"></script>
+{% endblock %}
