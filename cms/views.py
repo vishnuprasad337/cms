@@ -283,6 +283,7 @@ def manual_booking(request):
     guest_email = request.POST.get("guest_email")
     check_in = request.POST.get("check_in")
     check_out = request.POST.get("check_out")
+    id_proof_photo = request.FILES.get("main_guest_photo")
     phone = request.POST.get("phone")
     payment_mode = request.POST.get("payment_mode")
 
@@ -313,6 +314,7 @@ def manual_booking(request):
         room_number=room_number,
         check_in=check_in_date,
         check_out=check_out_date,
+        id_proof_photo=id_proof_photo,
         total_amount=total_amount,
         website="Direct",
         phone=phone,
